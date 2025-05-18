@@ -10,6 +10,8 @@ namespace Tools
     int CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units);
 
     BWAPI::Unit GetUnitOfType(BWAPI::UnitType type);
+    void Scout(BWAPI::Unit scout);
+    void GatherGas(BWAPI::Unit extractor);
     BWAPI::Unit GetDepot();
 
     bool BuildBuilding(BWAPI::UnitType type);
@@ -27,4 +29,5 @@ namespace Tools
 
     void DrawUnitHealthBars();
     void DrawHealthBar(BWAPI::Unit unit, double ratio, BWAPI::Color color, int yOffset);
+    void print(std::string stringToPrint);
 }

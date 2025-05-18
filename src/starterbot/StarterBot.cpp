@@ -7,14 +7,18 @@ StarterBot::StarterBot()
     
 }
 
-int workersWanted = 200;
+int workersWanted = 9;
+int lingsWanted = 0;
 int unusedSupplyAccepted = 1;
+
+BWAPI::Unit scout;
 
 // Called when the bot starts!
 void StarterBot::onStart()
 {
+    scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
     // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(0);
+	BWAPI::Broodwar->setLocalSpeed(32);
     BWAPI::Broodwar->setFrameSkip(0);
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
@@ -22,13 +26,16 @@ void StarterBot::onStart()
 
     // Call MapTools OnStart
     m_mapTools.onStart();
+
+    //Send first scout
+    Tools::Scout(scout);
 }
 
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
     // Update our MapTools information
-    //m_mapTools.onFrame();
+    m_mapTools.onFrame();
 
     // Send our idle workers to mine minerals so they don't just stand there
     sendIdleWorkersToMinerals();
@@ -40,25 +47,60 @@ void StarterBot::onFrame()
     buildAdditionalSupply();
 
     buildOrder();
+    Tools::Scout(scout);
 
     // Draw unit health bars, which brood war unfortunately does not do
-    //Tools::DrawUnitHealthBars();
+    Tools::DrawUnitHealthBars();
 
     // Draw some relevent information to the screen to help us debug the bot
-    //drawDebugInformation();
+    drawDebugInformation();
 }
 
 void StarterBot::buildOrder() {
-    const BWAPI::UnitType building = BWAPI::UnitTypes::Zerg_Spawning_Pool;
+    if (BWAPI::Broodwar->self()->supplyUsed() >= 9 * 2) {
+        if (buildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1)) {
+            workersWanted = 11;
+        }
+    }
 
-    if (Tools::IsQueued(building) || Tools::IsReady(building)) {
-        return;
+    if (Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Zergling, BWAPI::Broodwar->self()->getUnits()) < lingsWanted) {
+        trainUnit(BWAPI::UnitTypes::Zerg_Zergling);
+    }
+
+    if (BWAPI::Broodwar->self()->supplyUsed() >= 15 * 2) {
+        buildBuilding(BWAPI::UnitTypes::Zerg_Extractor, 0);
+    }
+
+    if (BWAPI::Broodwar->self()->minerals() > 350) {
+        buildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0);
+    }
+}
+
+bool StarterBot::buildBuilding(BWAPI::UnitType building, int limitAmount = 0) {
+    if (Tools::IsQueued(building) || Tools::IsReady(building) && limitAmount != 0) {
+        return true;
     }
 
     if (BWAPI::Broodwar->self()->minerals() <= building.mineralPrice()) {
-        return;
+        return false;
     }
-    Tools::BuildBuilding(building);
+
+    if (limitAmount != 0 && Tools::CountUnitsOfType(building, BWAPI::Broodwar->self()->getUnits()) >= limitAmount) {
+        return false;
+    }
+
+    return Tools::BuildBuilding(building);
+}
+
+BWAPI::Unit StarterBot::getAvailableUnit(BWAPI::UnitType unitType) {
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+    for (auto& unit : myUnits) {
+        // Check the unit type, if it is an idle worker, then we want to send it somewhere
+        if (unit->getType() == unitType && unit->isIdle()) {
+            // Get the closest mineral to this worker unit
+            return unit;
+        }
+    }
 }
 
 // Send our idle workers to mine minerals so they don't just stand there
@@ -80,7 +122,6 @@ void StarterBot::sendIdleWorkersToMinerals()
         }
     }
 }
-
 // Train more workers so we can gather more income
 void StarterBot::trainAdditionalWorkers()
 {
@@ -98,13 +139,13 @@ void StarterBot::trainAdditionalWorkers()
 }
 
 // Train more workers so we can gather more income
-bool StarterBot::trainUnit(BWAPI::UnitType supplyProviderType) {
+bool StarterBot::trainUnit(BWAPI::UnitType unit) {
     const BWAPI::Unit myDepot = Tools::GetDepot();
 
     // if we have a valid depot unit and it's currently not training something, train a worker
     // there is no reason for a bot to ever use the unit queueing system, it just wastes resources
     if (myDepot) {
-        return myDepot->train(supplyProviderType);
+        return myDepot->train(unit);
     }
     return false;
 }
@@ -131,7 +172,7 @@ void StarterBot::buildAdditionalSupply()
 // Draw some relevent information to the screen to help us debug the bot
 void StarterBot::drawDebugInformation()
 {
-    BWAPI::Broodwar->drawTextScreen(BWAPI::Position(10, 10), "Hello, World!\n");
+    BWAPI::Broodwar->drawTextScreen(BWAPI::Position(10, 10), "Ikkrius\n");
     Tools::DrawUnitCommands();
     Tools::DrawUnitBoundingBoxes();
 }
@@ -166,10 +207,30 @@ void StarterBot::onSendText(std::string text)
         m_mapTools.toggleDraw();
     }
     if (text == "a") { //Attack
+        attack();
     }
     if (text == "d") { //Defend
     }
     if (text == "e") { //Expand
+    }
+}
+
+void StarterBot::attack() {
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+    for (auto& unit : myUnits) {
+        if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
+            for (auto tile : BWAPI::Broodwar->getStartLocations()) {
+                for (auto unitsOnTile : BWAPI::Broodwar->getUnitsOnTile(tile)) {
+                    if (unitsOnTile->getPlayer() == BWAPI::Broodwar->self()) continue;
+                }
+                if (BWAPI::Broodwar->isExplored(tile) && !BWAPI::Broodwar->isBuildable(tile, true) || !BWAPI::Broodwar->isExplored(tile)) {
+                    BWAPI::Position pos(tile);
+                    auto command = unit->getLastCommand();
+                    if (command.getTargetPosition() == pos) return;
+                    unit->attack(pos);
+                }
+            }
+        }
     }
 }
 
@@ -186,7 +247,28 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
 {
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
     if (supplyProviderType == unit->getType()) {
+        if (BWAPI::Broodwar->self()->supplyUsed() == 9 && Tools::IsQueued(BWAPI::UnitTypes::Zerg_Spawning_Pool)) {
+            workersWanted = 11;
+        }
         unusedSupplyAccepted++;
+    }
+
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
+        workersWanted = 11;
+        lingsWanted = 30;
+    }
+
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Extractor) {
+        Tools::GatherGas(unit);
+    }
+
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Zergling) {
+        attack();
+    }
+
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Hatchery) {
+        lingsWanted *= 2;
+        buildBuilding(BWAPI::UnitTypes::Zerg_Evolution_Chamber);
     }
 }
 

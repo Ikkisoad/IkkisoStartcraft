@@ -23,10 +23,13 @@ public:
 	void onStart();
 	void onFrame();
 	void buildOrder();
+	bool buildBuilding(BWAPI::UnitType building, int limitAmount);
+	BWAPI::Unit getAvailableUnit(BWAPI::UnitType unitType);
 	void onEnd(bool isWinner);
 	void onUnitDestroy(BWAPI::Unit unit);
 	void onUnitMorph(BWAPI::Unit unit);
 	void onSendText(std::string text);
+	void attack();
 	void onUnitCreate(BWAPI::Unit unit);
 	void onUnitComplete(BWAPI::Unit unit);
 	void onUnitShow(BWAPI::Unit unit);

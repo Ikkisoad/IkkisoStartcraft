@@ -51,6 +51,32 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
     return nullptr;
 }
 
+void Tools::Scout(BWAPI::Unit scout) {
+    if (!scout) return;
+    for (auto tile : BWAPI::Broodwar->getStartLocations()) {
+        if (!BWAPI::Broodwar->isExplored(tile)) {
+            BWAPI::Position pos(tile);
+            auto command = scout->getLastCommand();
+            if (command.getTargetPosition() == pos) return;
+            scout->move(pos);
+            return;
+        }
+    }
+}
+
+void Tools::GatherGas(BWAPI::Unit extractor) {
+    int count = 0;
+    // For each unit that we own
+    for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
+        // if the unit is of the correct type, and it actually has been constructed, return it
+        if (unit->getType().isWorker()) {
+            unit->gather(extractor);
+            count++;
+            if (count >= 3) return;
+        }
+    }
+}
+
 BWAPI::Unit Tools::GetDepot()
 {
     const BWAPI::UnitType depot = BWAPI::Broodwar->self()->getRace().getResourceDepot();
@@ -145,10 +171,10 @@ int Tools::GetTotalSupply(bool inProgress)
     for (auto& unit : BWAPI::Broodwar->self()->getUnits())
     {
         // ignore units that are fully completed
-        if (unit->isCompleted()) { continue; }
+        if (unit->getBuildType() != BWAPI::UnitTypes::Zerg_Overlord || unit->getType() == BWAPI::UnitTypes::Zerg_Overlord && !unit->isCompleted()) { continue; }
 
         // if they are not completed, then add their supply provided to the total supply
-        totalSupply += unit->getType().supplyProvided();
+        totalSupply += BWAPI::UnitTypes::Zerg_Overlord.supplyProvided();
     }
 
     // one last tricky case: if a unit is currently on its way to build a supply provider, add it
@@ -174,7 +200,7 @@ bool Tools::IsQueued(BWAPI::UnitType unit) {
         const BWAPI::UnitCommand& command = readyUnit->getLastCommand();
 
         // if it's not a build command we can ignore it
-        if (command.getType() != BWAPI::UnitCommandTypes::Build && command.getUnitType() != unit) { continue; }
+        if (command.getType() != BWAPI::UnitCommandTypes::Build || command.getUnitType() != unit) { continue; }
 
         return true;
     }
@@ -257,4 +283,8 @@ void Tools::DrawHealthBar(BWAPI::Unit unit, double ratio, BWAPI::Color color, in
     {
         BWAPI::Broodwar->drawLineMap(BWAPI::Position(i, hpTop), BWAPI::Position(i, hpBottom), BWAPI::Colors::Black);
     }
+}
+
+void Tools::print(std::string stringToPrint) {
+    BWAPI::Broodwar->printf("%s", stringToPrint.c_str());
 }
