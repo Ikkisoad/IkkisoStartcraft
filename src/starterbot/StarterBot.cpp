@@ -7,11 +7,14 @@ StarterBot::StarterBot()
     
 }
 
+int workersWanted = 200;
+int unusedSupplyAccepted = 1;
+
 // Called when the bot starts!
 void StarterBot::onStart()
 {
     // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(10);
+	BWAPI::Broodwar->setLocalSpeed(0);
     BWAPI::Broodwar->setFrameSkip(0);
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
@@ -25,7 +28,7 @@ void StarterBot::onStart()
 void StarterBot::onFrame()
 {
     // Update our MapTools information
-    m_mapTools.onFrame();
+    //m_mapTools.onFrame();
 
     // Send our idle workers to mine minerals so they don't just stand there
     sendIdleWorkersToMinerals();
@@ -36,11 +39,26 @@ void StarterBot::onFrame()
     // Build more supply if we are going to run out soon
     buildAdditionalSupply();
 
+    buildOrder();
+
     // Draw unit health bars, which brood war unfortunately does not do
-    Tools::DrawUnitHealthBars();
+    //Tools::DrawUnitHealthBars();
 
     // Draw some relevent information to the screen to help us debug the bot
-    drawDebugInformation();
+    //drawDebugInformation();
+}
+
+void StarterBot::buildOrder() {
+    const BWAPI::UnitType building = BWAPI::UnitTypes::Zerg_Spawning_Pool;
+
+    if (Tools::IsQueued(building) || Tools::IsReady(building)) {
+        return;
+    }
+
+    if (BWAPI::Broodwar->self()->minerals() <= building.mineralPrice()) {
+        return;
+    }
+    Tools::BuildBuilding(building);
 }
 
 // Send our idle workers to mine minerals so they don't just stand there
@@ -67,7 +85,6 @@ void StarterBot::sendIdleWorkersToMinerals()
 void StarterBot::trainAdditionalWorkers()
 {
     const BWAPI::UnitType workerType = BWAPI::Broodwar->self()->getRace().getWorker();
-    const int workersWanted = 20;
     const int workersOwned = Tools::CountUnitsOfType(workerType, BWAPI::Broodwar->self()->getUnits());
     if (workersOwned < workersWanted)
     {
@@ -80,6 +97,18 @@ void StarterBot::trainAdditionalWorkers()
     }
 }
 
+// Train more workers so we can gather more income
+bool StarterBot::trainUnit(BWAPI::UnitType supplyProviderType) {
+    const BWAPI::Unit myDepot = Tools::GetDepot();
+
+    // if we have a valid depot unit and it's currently not training something, train a worker
+    // there is no reason for a bot to ever use the unit queueing system, it just wastes resources
+    if (myDepot) {
+        return myDepot->train(supplyProviderType);
+    }
+    return false;
+}
+
 // Build more supply if we are going to run out soon
 void StarterBot::buildAdditionalSupply()
 {
@@ -87,12 +116,12 @@ void StarterBot::buildAdditionalSupply()
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
 
     // If we have a sufficient amount of supply, we don't need to do anything
-    if (unusedSupply >= 2) { return; }
+    if (unusedSupply >= unusedSupplyAccepted) { return; }
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
 
-    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType);
+    const bool startedBuilding = trainUnit(supplyProviderType);
     if (startedBuilding)
     {
         BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
@@ -116,7 +145,10 @@ void StarterBot::onEnd(bool isWinner)
 // Called whenever a unit is destroyed, with a pointer to the unit
 void StarterBot::onUnitDestroy(BWAPI::Unit unit)
 {
-	
+    const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
+    if (supplyProviderType == unit->getType()) {
+        unusedSupplyAccepted--;
+    }
 }
 
 // Called whenever a unit is morphed, with a pointer to the unit
@@ -129,9 +161,15 @@ void StarterBot::onUnitMorph(BWAPI::Unit unit)
 // Called whenever a text is sent to the game by a user
 void StarterBot::onSendText(std::string text) 
 { 
-    if (text == "/map")
+    if (text == "m")
     {
         m_mapTools.toggleDraw();
+    }
+    if (text == "a") { //Attack
+    }
+    if (text == "d") { //Defend
+    }
+    if (text == "e") { //Expand
     }
 }
 
@@ -146,7 +184,10 @@ void StarterBot::onUnitCreate(BWAPI::Unit unit)
 // Called whenever a unit finished construction, with a pointer to the unit
 void StarterBot::onUnitComplete(BWAPI::Unit unit)
 {
-	
+    const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
+    if (supplyProviderType == unit->getType()) {
+        unusedSupplyAccepted++;
+    }
 }
 
 // Called whenever a unit appears, with a pointer to the destroyed unit

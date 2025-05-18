@@ -21,6 +21,10 @@ namespace Tools
 
     int GetTotalSupply(bool inProgress = false);
 
+    bool IsQueued(BWAPI::UnitType unit);
+
+    bool IsReady(BWAPI::UnitType unit);
+
     void DrawUnitHealthBars();
     void DrawHealthBar(BWAPI::Unit unit, double ratio, BWAPI::Color color, int yOffset);
 }

@@ -57,7 +57,7 @@ BWAPI::Unit Tools::GetDepot()
     return GetUnitOfType(depot);
 }
 
-// Attempt tp construct a building of a given type 
+// Attempt to construct a building of a given type 
 bool Tools::BuildBuilding(BWAPI::UnitType type)
 {
     // Get the type of unit that is required to build the desired building
@@ -165,6 +165,32 @@ int Tools::GetTotalSupply(bool inProgress)
     }
 
     return totalSupply;
+}
+
+bool Tools::IsQueued(BWAPI::UnitType unit) {
+    // one last tricky case: if a unit is currently on its way to build a supply provider, add it
+    for (auto& readyUnit : BWAPI::Broodwar->self()->getUnits()) {
+        // get the last command given to the unit
+        const BWAPI::UnitCommand& command = readyUnit->getLastCommand();
+
+        // if it's not a build command we can ignore it
+        if (command.getType() != BWAPI::UnitCommandTypes::Build && command.getUnitType() != unit) { continue; }
+
+        return true;
+    }
+    return false;
+}
+
+bool Tools::IsReady(BWAPI::UnitType unit) {
+    // one last tricky case: if a unit is currently on its way to build a supply provider, add it
+    for (auto& readyUnit : BWAPI::Broodwar->self()->getUnits()) {
+
+        // if it's not a build command we can ignore it
+        if (unit != readyUnit->getType()) { continue; }
+
+        return true;
+    }
+    return false;
 }
 
 void Tools::DrawUnitHealthBars()
