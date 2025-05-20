@@ -24,13 +24,33 @@
     <ClInclude Include="..\src\starterbot\ReplayParser.h" />
     <ClInclude Include="..\src\starterbot\StarterBot.h" />
     <ClInclude Include="..\src\starterbot\Tools.h" />
+    <ClInclude Include="BasesTools.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\BWEM\src\area.cpp" />
+    <ClCompile Include="..\BWEM\src\base.cpp" />
+    <ClCompile Include="..\BWEM\src\BaseFinder.cpp" />
+    <ClCompile Include="..\BWEM\src\bwapiExt.cpp" />
+    <ClCompile Include="..\BWEM\src\bwem.cpp" />
+    <ClCompile Include="..\BWEM\src\cp.cpp" />
+    <ClCompile Include="..\BWEM\src\graph.cpp" />
+    <ClCompile Include="..\BWEM\src\gridMap.cpp" />
+    <ClCompile Include="..\BWEM\src\map.cpp" />
+    <ClCompile Include="..\BWEM\src\mapDrawer.cpp" />
+    <ClCompile Include="..\BWEM\src\mapImpl.cpp" />
+    <ClCompile Include="..\BWEM\src\mapPrinter.cpp" />
+    <ClCompile Include="..\BWEM\src\neutral.cpp" />
+    <ClCompile Include="..\BWEM\src\tiles.cpp" />
+    <ClCompile Include="..\BWEM\src\utils.cpp" />
     <ClCompile Include="..\src\starterbot\main.cpp" />
     <ClCompile Include="..\src\starterbot\MapTools.cpp" />
     <ClCompile Include="..\src\starterbot\ReplayParser.cpp" />
     <ClCompile Include="..\src\starterbot\StarterBot.cpp" />
     <ClCompile Include="..\src\starterbot\Tools.cpp" />
+    <ClCompile Include="BasesTools.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BWEM.vcxproj" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>StarterBot</ProjectName>

@@ -1,6 +1,7 @@
 #include "StarterBot.h"
 #include "Tools.h"
 #include "MapTools.h"
+#include "../../visualstudio/BasesTools.h"
 
 StarterBot::StarterBot()
 {
@@ -10,12 +11,12 @@ StarterBot::StarterBot()
 int workersWanted = 9;
 int lingsWanted = 0;
 int unusedSupplyAccepted = 1;
-
 BWAPI::Unit scout;
 
 // Called when the bot starts!
 void StarterBot::onStart()
 {
+    BasesTools::Initialize();
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
     // Set our BWAPI options here    
 	BWAPI::Broodwar->setLocalSpeed(32);
@@ -34,6 +35,7 @@ void StarterBot::onStart()
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
+    BasesTools::FindExpansions();
     // Update our MapTools information
     m_mapTools.onFrame();
 
