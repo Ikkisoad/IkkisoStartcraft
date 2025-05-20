@@ -11,6 +11,7 @@ StarterBot::StarterBot()
 int workersWanted = 9;
 int lingsWanted = 0;
 int unusedSupplyAccepted = 1;
+int expandTimer = 0;
 BWAPI::Unit scout;
 
 // Called when the bot starts!
@@ -58,6 +59,8 @@ void StarterBot::onFrame()
 
     // Draw some relevent information to the screen to help us debug the bot
     drawDebugInformation();
+
+	if (expandTimer > 0) expandTimer--;
 }
 
 void StarterBot::buildOrder() {
@@ -79,8 +82,16 @@ void StarterBot::buildOrder() {
     //    buildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
     //}
 
-    if (BWAPI::Broodwar->self()->minerals() > 550){
-        buildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BasesTools::GetNaturalBasePosition());
+    if (BWAPI::Broodwar->self()->minerals() > 550 && expandTimer <= 0){
+		expandTimer = 200;
+        BWAPI::TilePosition natural = BasesTools::GetNaturalBasePosition();
+        if (!BWAPI::Broodwar->isExplored(natural)) {
+            auto drone = Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Drone);
+            BWAPI::Position pos(natural);
+			drone->move(pos);
+        } else {
+            buildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, natural);
+        }
     }
 }
 
@@ -227,12 +238,20 @@ void StarterBot::attack() {
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
     for (auto& unit : myUnits) {
         if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-            for (auto enemyUnits : BWAPI::Broodwar->getAllUnits()) {
-                if (enemyUnits->getPlayer() != BWAPI::Broodwar->self() && enemyUnits->getPlayer() != BWAPI::Broodwar->neutral()) {
-                    auto command = unit->getLastCommand();
-                    if (command.getTargetPosition() == enemyUnits->getPosition()) return;
-                    unit->attack(enemyUnits->getPosition());
+            // Find the nearest enemy unit
+            BWAPI::Unit nearestEnemy = nullptr;
+            int minDistance = std::numeric_limits<int>::max();
+            for (auto enemyUnit : BWAPI::Broodwar->getAllUnits()) {
+                if (enemyUnit->getPlayer() != BWAPI::Broodwar->self() && enemyUnit->getPlayer() != BWAPI::Broodwar->neutral()) {
+                    int distance = unit->getDistance(enemyUnit);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestEnemy = enemyUnit;
+                    }
                 }
+            }
+            if (nearestEnemy) {
+                unit->attack(nearestEnemy->getPosition());
             }
         }
     }
