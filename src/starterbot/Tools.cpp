@@ -84,7 +84,7 @@ BWAPI::Unit Tools::GetDepot()
 }
 
 // Attempt to construct a building of a given type 
-bool Tools::BuildBuilding(BWAPI::UnitType type)
+bool Tools::BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation())
 {
     // Get the type of unit that is required to build the desired building
     BWAPI::UnitType builderType = type.whatBuilds().first;
@@ -93,9 +93,6 @@ bool Tools::BuildBuilding(BWAPI::UnitType type)
     // If we can't find a valid builder unit, then we have to cancel the building
     BWAPI::Unit builder = Tools::GetUnitOfType(builderType);
     if (!builder) { return false; }
-
-    // Get a location that we want to build the building next to
-    BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
 
     // Ask BWAPI for a building location near the desired position for the type
     int maxBuildRange = 64;

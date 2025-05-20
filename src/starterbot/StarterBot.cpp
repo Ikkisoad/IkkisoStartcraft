@@ -19,8 +19,8 @@ void StarterBot::onStart()
     BasesTools::Initialize();
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
     // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(32);
-    BWAPI::Broodwar->setFrameSkip(0);
+	BWAPI::Broodwar->setLocalSpeed(0); //32
+    BWAPI::Broodwar->setFrameSkip(0); //0
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
     BWAPI::Broodwar->enableFlag(BWAPI::Flag::UserInput);
@@ -62,7 +62,7 @@ void StarterBot::onFrame()
 
 void StarterBot::buildOrder() {
     if (BWAPI::Broodwar->self()->supplyUsed() >= 9 * 2) {
-        if (buildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1)) {
+        if (buildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation())) {
             workersWanted = 11;
         }
     }
@@ -72,15 +72,19 @@ void StarterBot::buildOrder() {
     }
 
     if (BWAPI::Broodwar->self()->supplyUsed() >= 15 * 2) {
-        buildBuilding(BWAPI::UnitTypes::Zerg_Extractor, 0);
+        buildBuilding(BWAPI::UnitTypes::Zerg_Extractor, 0, BWAPI::Broodwar->self()->getStartLocation());
     }
 
-    if (BWAPI::Broodwar->self()->minerals() > 350) {
-        buildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0);
+    //if (BWAPI::Broodwar->self()->minerals() > 350) {
+    //    buildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
+    //}
+
+    if (BWAPI::Broodwar->self()->minerals() > 550){
+        buildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BasesTools::GetNaturalBasePosition());
     }
 }
 
-bool StarterBot::buildBuilding(BWAPI::UnitType building, int limitAmount = 0) {
+bool StarterBot::buildBuilding(BWAPI::UnitType building, int limitAmount = 0, BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation()) {
     if (Tools::IsQueued(building) || Tools::IsReady(building) && limitAmount != 0) {
         return true;
     }
@@ -93,7 +97,7 @@ bool StarterBot::buildBuilding(BWAPI::UnitType building, int limitAmount = 0) {
         return false;
     }
 
-    return Tools::BuildBuilding(building);
+    return Tools::BuildBuilding(building, desiredPos);
 }
 
 BWAPI::Unit StarterBot::getAvailableUnit(BWAPI::UnitType unitType) {
@@ -223,15 +227,11 @@ void StarterBot::attack() {
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
     for (auto& unit : myUnits) {
         if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-            for (auto tile : BWAPI::Broodwar->getStartLocations()) {
-                for (auto unitsOnTile : BWAPI::Broodwar->getUnitsOnTile(tile)) {
-                    if (unitsOnTile->getPlayer() == BWAPI::Broodwar->self()) continue;
-                }
-                if (BWAPI::Broodwar->isExplored(tile) && !BWAPI::Broodwar->isBuildable(tile, true) || !BWAPI::Broodwar->isExplored(tile)) {
-                    BWAPI::Position pos(tile);
+            for (auto enemyUnits : BWAPI::Broodwar->getAllUnits()) {
+                if (enemyUnits->getPlayer() != BWAPI::Broodwar->self() && enemyUnits->getPlayer() != BWAPI::Broodwar->neutral()) {
                     auto command = unit->getLastCommand();
-                    if (command.getTargetPosition() == pos) return;
-                    unit->attack(pos);
+                    if (command.getTargetPosition() == enemyUnits->getPosition()) return;
+                    unit->attack(enemyUnits->getPosition());
                 }
             }
         }
@@ -272,7 +272,7 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
 
     if (unit->getType() == BWAPI::UnitTypes::Zerg_Hatchery) {
         lingsWanted *= 2;
-        buildBuilding(BWAPI::UnitTypes::Zerg_Evolution_Chamber);
+        buildBuilding(BWAPI::UnitTypes::Zerg_Evolution_Chamber, 2, BWAPI::Broodwar->self()->getStartLocation());
     }
 }
 

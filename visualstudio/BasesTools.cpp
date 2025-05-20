@@ -6,11 +6,11 @@
 
 auto& bwem = BWEM::Map::Instance();  
 
-BWAPI::Position mainBasePosition;
-BWAPI::Position naturalBasePosition;
-BWAPI::Position thirdBasePosition;
-BWAPI::Position fourthBasePosition;
-BWAPI::Position fifthBasePosition;
+BWAPI::TilePosition mainBasePosition;
+BWAPI::TilePosition naturalBasePosition;
+BWAPI::TilePosition thirdBasePosition;
+BWAPI::TilePosition fourthBasePosition;
+BWAPI::TilePosition fifthBasePosition;
 
 namespace BasesTools {  
 
@@ -33,11 +33,11 @@ namespace BasesTools {
 
     void BasesTools::FindExpansions() {
         BWAPI::Position mainBase(BWAPI::Broodwar->self()->getStartLocation());
-		mainBasePosition = mainBase;
+        mainBasePosition = BWAPI::TilePosition(mainBase);
         auto bases = bwem.GetNearestArea(BWAPI::Broodwar->self()->getStartLocation())->AccessibleNeighbours();
         for (auto& base : bases) {
             for (auto& unit : base->Bases()) {
-                BWAPI::Position pos(unit.Location());
+                BWAPI::TilePosition pos(unit.Location());
                 naturalBasePosition = pos;
             }
         }
@@ -46,8 +46,11 @@ namespace BasesTools {
     }
 
     void BasesTools::DrawExpansions() {
-        BWAPI::Broodwar->drawCircleMap(mainBasePosition, 32, BWAPI::Colors::Red, true);
-        BWAPI::Broodwar->drawCircleMap(naturalBasePosition, 32, BWAPI::Colors::Red, true);
+        // Fix the issue by ensuring the correct type is passed to `drawCircleMap`.  
+        // `drawCircleMap` expects a `BWAPI::Position` type, but `mainBasePosition` is a `BWAPI::TilePosition`.  
+        // Convert `BWAPI::TilePosition` to `BWAPI::Position` using `BWAPI::Position()` constructor.
+        BWAPI::Broodwar->drawCircleMap(BWAPI::Position(mainBasePosition), 32, BWAPI::Colors::Red, true);
+        BWAPI::Broodwar->drawCircleMap(BWAPI::Position(naturalBasePosition), 32, BWAPI::Colors::Red, true);
         //BWAPI::Broodwar->drawCircleMap(thirdBasePosition, 32, BWAPI::Colors::Red, true);
         //BWAPI::Broodwar->drawCircleMap(fourthBasePosition, 32, BWAPI::Colors::Red, true);
         //BWAPI::Broodwar->drawCircleMap(fifthBasePosition, 32, BWAPI::Colors::Red, true);
@@ -57,7 +60,7 @@ namespace BasesTools {
         auto bases = bwem.GetNearestArea(BWAPI::Broodwar->self()->getStartLocation())->AccessibleNeighbours();
         for (auto& base : bases) {
             for (auto& unit : base->Bases()) {
-                BWAPI::Position pos(unit.Location());
+                BWAPI::TilePosition pos(unit.Location());
                 if (!thirdBasePosition) thirdBasePosition = pos;
             }
         }
@@ -92,5 +95,22 @@ namespace BasesTools {
             BWAPI::Position pos(base->Location());  
             BWAPI::Broodwar->drawCircleMap(pos, 32, color, true);  
         }  
-    }  
+    }
+
+    BWAPI::TilePosition BasesTools::GetMainBasePosition() {
+        return mainBasePosition;
+	}
+
+    BWAPI::TilePosition BasesTools::GetNaturalBasePosition() {
+        return naturalBasePosition;
+    }
+    BWAPI::TilePosition BasesTools::GetThirdBasePosition() {
+        return thirdBasePosition;
+    }
+    BWAPI::TilePosition BasesTools::GetFourthBasePosition() {
+        return fourthBasePosition;
+    }
+    BWAPI::TilePosition BasesTools::GetFifthBasePosition() {
+        return fifthBasePosition;
+	}
 }

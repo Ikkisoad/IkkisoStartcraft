@@ -14,7 +14,7 @@ namespace Tools
     void GatherGas(BWAPI::Unit extractor);
     BWAPI::Unit GetDepot();
 
-    bool BuildBuilding(BWAPI::UnitType type);
+    bool BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos);
 
     void DrawUnitBoundingBoxes();
     void DrawUnitCommands();

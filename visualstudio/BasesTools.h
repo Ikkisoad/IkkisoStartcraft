@@ -11,4 +11,9 @@ namespace BasesTools {
 	BWAPI::Position ReturnBasePosition(BWEM::Area area);
 	std::vector<const BWEM::Base*> GetAccessibleNeighborBases(const BWAPI::TilePosition& tilePos);
 	void DrawBases(const std::vector<const BWEM::Base*>& bases, BWAPI::Color color);
+	BWAPI::TilePosition GetMainBasePosition();
+	BWAPI::TilePosition GetNaturalBasePosition();
+	BWAPI::TilePosition GetThirdBasePosition();
+	BWAPI::TilePosition GetFourthBasePosition();
+	BWAPI::TilePosition GetFifthBasePosition();
 }

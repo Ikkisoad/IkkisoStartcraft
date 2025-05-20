@@ -23,7 +23,7 @@ public:
 	void onStart();
 	void onFrame();
 	void buildOrder();
-	bool buildBuilding(BWAPI::UnitType building, int limitAmount);
+	bool buildBuilding(BWAPI::UnitType building, int limitAmount, BWAPI::TilePosition desiredPos);
 	BWAPI::Unit getAvailableUnit(BWAPI::UnitType unitType);
 	void onEnd(bool isWinner);
 	void onUnitDestroy(BWAPI::Unit unit);
