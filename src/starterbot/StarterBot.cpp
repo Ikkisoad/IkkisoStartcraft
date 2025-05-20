@@ -30,12 +30,14 @@ void StarterBot::onStart()
 
     //Send first scout
     Tools::Scout(scout);
+    BasesTools::FindExpansions();
 }
 
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
-    BasesTools::FindExpansions();
+    BasesTools::FindExpansionsV1();
+	BasesTools::DrawExpansions();
     // Update our MapTools information
     m_mapTools.onFrame();
 

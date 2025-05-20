@@ -4,7 +4,11 @@
 
 namespace BasesTools {
 	void Initialize();
+	void FindExpansionsV1();
 	void FindExpansions();
+	void DrawExpansions();
+	void FindThirdBase();
+	BWAPI::Position ReturnBasePosition(BWEM::Area area);
 	std::vector<const BWEM::Base*> GetAccessibleNeighborBases(const BWAPI::TilePosition& tilePos);
 	void DrawBases(const std::vector<const BWEM::Base*>& bases, BWAPI::Color color);
 }
