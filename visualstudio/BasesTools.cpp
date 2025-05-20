@@ -12,7 +12,18 @@ BWAPI::TilePosition thirdBasePosition;
 BWAPI::TilePosition fourthBasePosition;
 BWAPI::TilePosition fifthBasePosition;
 
+// Add variable to store enemy base position
+BWAPI::Position enemyBasePosition = BWAPI::Positions::None;
+
 namespace BasesTools {  
+
+    void SetEnemyBasePosition(const BWAPI::Position& pos) {
+        enemyBasePosition = pos;
+    }
+
+    BWAPI::Position GetEnemyBasePosition() {
+        return enemyBasePosition;
+    }
 
     void BasesTools::Initialize() {
         bwem.Initialize(BWAPI::BroodwarPtr);
@@ -112,5 +123,5 @@ namespace BasesTools {
     }
     BWAPI::TilePosition BasesTools::GetFifthBasePosition() {
         return fifthBasePosition;
-	}
+    }
 }

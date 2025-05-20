@@ -16,4 +16,8 @@ namespace BasesTools {
 	BWAPI::TilePosition GetThirdBasePosition();
 	BWAPI::TilePosition GetFourthBasePosition();
 	BWAPI::TilePosition GetFifthBasePosition();
+
+	// Add getter and setter for enemy base position
+	void SetEnemyBasePosition(const BWAPI::Position& pos);
+	BWAPI::Position GetEnemyBasePosition();
 }

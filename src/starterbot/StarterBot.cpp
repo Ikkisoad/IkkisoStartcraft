@@ -19,6 +19,15 @@ void StarterBot::onStart()
 {
     BasesTools::Initialize();
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
+
+    // Set enemy base position at game start (for example, first unexplored start location that is not ours)
+    for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
+        if (tile != BWAPI::Broodwar->self()->getStartLocation()) {
+            BasesTools::SetEnemyBasePosition(BWAPI::Position(tile));
+            break;
+        }
+    }
+
     // Set our BWAPI options here    
 	BWAPI::Broodwar->setLocalSpeed(0); //32
     BWAPI::Broodwar->setFrameSkip(0); //0
@@ -235,23 +244,34 @@ void StarterBot::onSendText(std::string text)
 }
 
 void StarterBot::attack() {
-    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-    for (auto& unit : myUnits) {
-        if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-            // Find the nearest enemy unit
-            BWAPI::Unit nearestEnemy = nullptr;
-            int minDistance = std::numeric_limits<int>::max();
-            for (auto enemyUnit : BWAPI::Broodwar->getAllUnits()) {
-                if (enemyUnit->getPlayer() != BWAPI::Broodwar->self() && enemyUnit->getPlayer() != BWAPI::Broodwar->neutral()) {
-                    int distance = unit->getDistance(enemyUnit);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        nearestEnemy = enemyUnit;
+    BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
+    if (enemyBase == BWAPI::Positions::None) {
+        // fallback: attack nearest enemy unit as before
+        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+        for (auto& unit : myUnits) {
+            if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
+                BWAPI::Unit nearestEnemy = nullptr;
+                int minDistance = std::numeric_limits<int>::max();
+                for (auto enemyUnit : BWAPI::Broodwar->getAllUnits()) {
+                    if (enemyUnit->getPlayer() != BWAPI::Broodwar->self() && enemyUnit->getPlayer() != BWAPI::Broodwar->neutral()) {
+                        int distance = unit->getDistance(enemyUnit);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            nearestEnemy = enemyUnit;
+                        }
                     }
                 }
+                if (nearestEnemy) {
+                    unit->attack(nearestEnemy->getPosition());
+                }
             }
-            if (nearestEnemy) {
-                unit->attack(nearestEnemy->getPosition());
+        }
+    } else {
+        // attack the known enemy base position
+        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+        for (auto& unit : myUnits) {
+            if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
+                unit->attack(enemyBase);
             }
         }
     }
@@ -299,7 +319,23 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
 // This is usually triggered when units appear from fog of war and become visible
 void StarterBot::onUnitShow(BWAPI::Unit unit)
 { 
-	
+    // If the unit belongs to the enemy and is a building
+    if (unit->getPlayer() != BWAPI::Broodwar->self() &&
+        unit->getPlayer() != BWAPI::Broodwar->neutral() &&
+        unit->getType().isBuilding())
+    {
+        // Check if the building is at a start location
+        for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
+            BWAPI::Position startPos(tile);
+            // If the building is close to a start location, update enemy base
+            if (unit->getPosition().getApproxDistance(startPos) < 256) {
+                BasesTools::SetEnemyBasePosition(startPos);
+                break;
+            }
+        }
+        // Optionally: If you want to update to any seen enemy building position (not just start locations)
+        // BasesTools::SetEnemyBasePosition(unit->getPosition());
+    }
 }
 
 // Called whenever a unit gets hidden, with a pointer to the destroyed unit
