@@ -83,6 +83,34 @@ BWAPI::Unit Tools::GetDepot()
     return GetUnitOfType(depot);
 }
 
+bool Tools::TryBuildBuilding(BWAPI::UnitType building, int limitAmount = 0, BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation()) {
+    if (Tools::IsQueued(building) || Tools::IsReady(building) && limitAmount != 0) {
+        return true;
+    }
+
+    if (BWAPI::Broodwar->self()->minerals() <= building.mineralPrice()) {
+        return false;
+    }
+
+    if (limitAmount != 0 && Tools::CountUnitsOfType(building, BWAPI::Broodwar->self()->getUnits()) >= limitAmount) {
+        return false;
+    }
+
+    return Tools::BuildBuilding(building, desiredPos);
+}
+
+// Train more workers so we can gather more income
+bool Tools::TrainUnit(BWAPI::UnitType unit) {
+    const BWAPI::Unit myDepot = Tools::GetDepot();
+
+    // if we have a valid depot unit and it's currently not training something, train a worker
+    // there is no reason for a bot to ever use the unit queueing system, it just wastes resources
+    if (myDepot) {
+        return myDepot->train(unit);
+    }
+    return false;
+}
+
 // Attempt to construct a building of a given type 
 bool Tools::BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation())
 {

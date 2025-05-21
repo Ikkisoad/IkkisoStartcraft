@@ -32,6 +32,7 @@ public:
 	void attack();
 	void onUnitCreate(BWAPI::Unit unit);
 	void onUnitComplete(BWAPI::Unit unit);
+	void onUnitCompleteV1(BWAPI::Unit unit);
 	void onUnitShow(BWAPI::Unit unit);
 	void onUnitHide(BWAPI::Unit unit);
 	void onUnitRenegade(BWAPI::Unit unit);
