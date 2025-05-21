@@ -27,6 +27,6 @@ void FourPool::OnUnitCreate(BWAPI::Unit unit) {
 
 void FourPool::onUnitComplete(BWAPI::Unit unit) {
     if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
-
+        zerglingRush = true;
     }
 }

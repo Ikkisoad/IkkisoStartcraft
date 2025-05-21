@@ -26,7 +26,6 @@
     <ClInclude Include="..\src\starterbot\StarterBot.h" />
     <ClInclude Include="..\src\starterbot\Tools.h" />
     <ClInclude Include="BasesTools.h" />
-    <ClInclude Include="src\starterbot\4Pool.h" />
     <ClInclude Include="src\starterbot\BuildOrder.h" />
   </ItemGroup>
   <ItemGroup>
@@ -52,7 +51,6 @@
     <ClCompile Include="..\src\starterbot\StarterBot.cpp" />
     <ClCompile Include="..\src\starterbot\Tools.cpp" />
     <ClCompile Include="BasesTools.cpp" />
-    <ClCompile Include="src\starterbot\4Pool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BWEM.vcxproj" />

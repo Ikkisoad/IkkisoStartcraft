@@ -22,6 +22,7 @@ BWAPI::Unit scout;
 void StarterBot::onStart()
 {
     BasesTools::Initialize();
+    currentBuildOrder = &FourPool::Instance();
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
 
     // Set enemy base position at game start (for example, first unexplored start location that is not ours)
@@ -50,7 +51,6 @@ void StarterBot::onStart()
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
-    currentBuildOrder = &FourPool::Instance();
     BasesTools::FindExpansionsV1();
 	BasesTools::DrawExpansions();
     // Update our MapTools information
