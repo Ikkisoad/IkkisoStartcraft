@@ -25,6 +25,11 @@ namespace BasesTools {
         return enemyBasePosition;
     }
 
+    bool BasesTools::IsAreaEnemyBase(BWAPI::Position position) {
+        auto area = bwem.GetArea(BWAPI::TilePosition(position));
+        return false;
+    }
+
     void BasesTools::Initialize() {
         bwem.Initialize(BWAPI::BroodwarPtr);
         bwem.EnableAutomaticPathAnalysis();
@@ -106,6 +111,16 @@ namespace BasesTools {
             BWAPI::Position pos(base->Location());  
             BWAPI::Broodwar->drawCircleMap(pos, 32, color, true);  
         }  
+    }
+
+    BWAPI::Position BasesTools::FindUnexploredStarterPosition() {
+        for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
+            if (tile != BWAPI::Broodwar->self()->getStartLocation() && !BWAPI::Broodwar->isExplored(tile)) {
+                return BWAPI::Position(tile);
+                break;
+            }
+        }
+		return enemyBasePosition; // Return the enemy base position if no unexplored tile is found
     }
 
     BWAPI::TilePosition BasesTools::GetMainBasePosition() {

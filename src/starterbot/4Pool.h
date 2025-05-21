@@ -8,6 +8,7 @@ public:
     void Execute() override;
     void OnUnitCreate(BWAPI::Unit unit) override;
     void onUnitComplete(BWAPI::Unit unit) override;
+    void attack();
 private:
     FourPool() = default;
 };
