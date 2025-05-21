@@ -3,6 +3,7 @@
 #include "../BWEM/bwem.h"  
 
 namespace BasesTools {
+	bool IsAreaEnemyBase(BWAPI::Position position);
 	void Initialize();
 	void FindExpansionsV1();
 	void FindExpansions();
@@ -11,6 +12,7 @@ namespace BasesTools {
 	BWAPI::Position ReturnBasePosition(BWEM::Area area);
 	std::vector<const BWEM::Base*> GetAccessibleNeighborBases(const BWAPI::TilePosition& tilePos);
 	void DrawBases(const std::vector<const BWEM::Base*>& bases, BWAPI::Color color);
+	BWAPI::Position FindUnexploredStarterPosition();
 	BWAPI::TilePosition GetMainBasePosition();
 	BWAPI::TilePosition GetNaturalBasePosition();
 	BWAPI::TilePosition GetThirdBasePosition();

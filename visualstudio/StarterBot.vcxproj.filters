@@ -52,6 +52,9 @@
       <Filter>BWEM</Filter>
     </ClCompile>
     <ClCompile Include="BasesTools.cpp" />
+    <ClCompile Include="..\src\starterbot\4Pool.cpp">
+      <Filter>BOs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
@@ -60,10 +63,17 @@
     <ClInclude Include="..\src\starterbot\StarterBot.h" />
     <ClInclude Include="..\src\starterbot\Tools.h" />
     <ClInclude Include="BasesTools.h" />
+    <ClInclude Include="..\src\starterbot\4Pool.h">
+      <Filter>BOs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\starterbot\BuildOrder.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="BWEM">
       <UniqueIdentifier>{7c672895-08b2-42c4-a5e6-96802688c9ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BOs">
+      <UniqueIdentifier>{2c41304b-d439-467a-b06f-f9c9b7381aff}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -25,6 +25,29 @@ namespace BasesTools {
         return enemyBasePosition;
     }
 
+    bool BasesTools::IsAreaEnemyBase(BWAPI::Position position) {
+        auto area = bwem.GetArea(BWAPI::TilePosition(position));
+        if (!area) return false;
+
+        for (auto& unit : BWAPI::Broodwar->getUnitsOnTile(BWAPI::TilePosition(position))) {
+            if (unit->getPlayer()->isEnemy(BWAPI::Broodwar->self()) && unit->getType().isBuilding() && unit->exists()) {
+                return true;
+            }
+        }
+
+        // Scan all units in the area for enemy buildings
+        //for (const auto& base : area->Bases()) {
+        //    BWAPI::TilePosition baseTile = base.Location();
+        //    // Check all units at this base location
+        //    for (auto& unit : BWAPI::Broodwar->getUnitsOnTile(baseTile)) {
+        //        if (unit->getPlayer()->isEnemy(BWAPI::Broodwar->self()) && unit->getType().isBuilding() && unit->exists()) {
+        //            return true;
+        //        }
+        //    }
+        //}
+        return false;
+    }
+
     void BasesTools::Initialize() {
         bwem.Initialize(BWAPI::BroodwarPtr);
         bwem.EnableAutomaticPathAnalysis();
@@ -106,6 +129,16 @@ namespace BasesTools {
             BWAPI::Position pos(base->Location());  
             BWAPI::Broodwar->drawCircleMap(pos, 32, color, true);  
         }  
+    }
+
+    BWAPI::Position BasesTools::FindUnexploredStarterPosition() {
+        for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
+            if (tile != BWAPI::Broodwar->self()->getStartLocation() && !BWAPI::Broodwar->isExplored(tile)) {
+                return BWAPI::Position(tile);
+                break;
+            }
+        }
+		return enemyBasePosition; // Return the enemy base position if no unexplored tile is found
     }
 
     BWAPI::TilePosition BasesTools::GetMainBasePosition() {
