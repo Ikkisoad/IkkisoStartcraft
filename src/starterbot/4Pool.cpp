@@ -2,6 +2,7 @@
 #include "Tools.h"
 #include "../../visualstudio/BasesTools.h"
 #include "../../BWEM/bwem.h"  
+#include "../../starterbot/Units.cpp"
 
 // Singleton instance
 FourPool& FourPool::Instance() {
@@ -35,27 +36,15 @@ void FourPool::onUnitComplete(BWAPI::Unit unit) {
 }
 
 void FourPool::attack() {
-    BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
+    const BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
+    //TODO If in enemy base area, attack nearest enemy unit
     if (enemyBase == BWAPI::Positions::None) {
+		const auto unexploredStartingPosition = BasesTools::FindUnexploredStarterPosition();
         // fallback: attack nearest enemy unit as before
         const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
         for (auto& unit : myUnits) {
             if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-                BWAPI::Unit nearestEnemy = nullptr;
-                int minDistance = std::numeric_limits<int>::max();
-                for (auto enemyUnit : BWAPI::Broodwar->getAllUnits()) {
-                    if (enemyUnit->getPlayer() != BWAPI::Broodwar->self() && enemyUnit->getPlayer() != BWAPI::Broodwar->neutral()) {
-                        int distance = unit->getDistance(enemyUnit);
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            nearestEnemy = enemyUnit;
-                        }
-                    }
-                }
-                if (nearestEnemy) {
-                    if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount() || !unit->isIdle()) { continue; }
-                    unit->attack(nearestEnemy->getPosition());
-                }
+                Units::Attack(unit, unexploredStartingPosition);
             }
         }
     } else {
@@ -63,13 +52,14 @@ void FourPool::attack() {
         const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
         for (auto& unit : myUnits) {
             if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-                if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount() || !unit->isIdle()) { continue; }
+                if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()/* || !unit->isIdle()*/) { continue; }
                 
-                if (BWAPI::Broodwar->isExplored(BWAPI::TilePosition(enemyBase))) {
-                    unit->attack(BasesTools::FindUnexploredStarterPosition());
-                } else {
-                    // If the enemy base is not visible, attack the position instead
-                    unit->move(enemyBase);
+                if (BasesTools::IsAreaEnemyBase(unit->getPosition())) {
+                    Units::AttackNearestEnemyUnit(unit);
+                }else if (BWAPI::Broodwar->isExplored(BWAPI::TilePosition(enemyBase)) && !BasesTools::IsAreaEnemyBase(enemyBase)) {
+                    Units::Attack(unit, BasesTools::FindUnexploredStarterPosition());
+                } else if (unit->isIdle()) {
+                    Units::Attack(unit, enemyBase);
 				}
             }
         }

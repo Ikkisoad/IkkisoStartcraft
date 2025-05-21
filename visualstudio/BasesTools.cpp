@@ -27,6 +27,24 @@ namespace BasesTools {
 
     bool BasesTools::IsAreaEnemyBase(BWAPI::Position position) {
         auto area = bwem.GetArea(BWAPI::TilePosition(position));
+        if (!area) return false;
+
+        for (auto& unit : BWAPI::Broodwar->getUnitsOnTile(BWAPI::TilePosition(position))) {
+            if (unit->getPlayer()->isEnemy(BWAPI::Broodwar->self()) && unit->getType().isBuilding() && unit->exists()) {
+                return true;
+            }
+        }
+
+        // Scan all units in the area for enemy buildings
+        //for (const auto& base : area->Bases()) {
+        //    BWAPI::TilePosition baseTile = base.Location();
+        //    // Check all units at this base location
+        //    for (auto& unit : BWAPI::Broodwar->getUnitsOnTile(baseTile)) {
+        //        if (unit->getPlayer()->isEnemy(BWAPI::Broodwar->self()) && unit->getType().isBuilding() && unit->exists()) {
+        //            return true;
+        //        }
+        //    }
+        //}
         return false;
     }
 

@@ -26,12 +26,12 @@ void StarterBot::onStart()
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
 
     // Set enemy base position at game start (for example, first unexplored start location that is not ours)
-    for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
-        if (tile != BWAPI::Broodwar->self()->getStartLocation()) {
-            BasesTools::SetEnemyBasePosition(BWAPI::Position(tile));
-            break;
-        }
-    }
+    //for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
+    //    if (tile != BWAPI::Broodwar->self()->getStartLocation()) {
+    //        BasesTools::SetEnemyBasePosition(BWAPI::Position(tile));
+    //        break;
+    //    }
+    //}
 
     // Set our BWAPI options here    
 	BWAPI::Broodwar->setLocalSpeed(0); //32
@@ -196,7 +196,7 @@ void StarterBot::buildAdditionalSupply()
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
 
     // If we have a sufficient amount of supply, we don't need to do anything
-    if (unusedSupply >= unusedSupplyAccepted) { return; }
+    if (unusedSupply >= unusedSupplyAccepted && unusedSupply != 1) { return; }
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
