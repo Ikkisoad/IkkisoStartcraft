@@ -4,6 +4,8 @@
 #include "4Pool.h"
 #include "../../visualstudio/BasesTools.h"
 #include "../../visualstudio/src/starterbot/BuildOrder.h"
+#include "Factory/BuildOrderFactory.h"
+#include "micro.h"
 
 StarterBot::StarterBot()
 {
@@ -22,16 +24,12 @@ BWAPI::Unit scout;
 void StarterBot::onStart()
 {
     BasesTools::Initialize();
-    currentBuildOrder = &FourPool::Instance();
-    scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
 
-    // Set enemy base position at game start (for example, first unexplored start location that is not ours)
-    //for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
-    //    if (tile != BWAPI::Broodwar->self()->getStartLocation()) {
-    //        BasesTools::SetEnemyBasePosition(BWAPI::Position(tile));
-    //        break;
-    //    }
-    //}
+    // Select the build order type you want to use
+    BuildOrderType selectedBuildOrder = BuildOrderType::FourPool;
+    currentBuildOrder = BuildOrderFactory::Create(selectedBuildOrder);
+
+    scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
 
     // Set our BWAPI options here    
 	BWAPI::Broodwar->setLocalSpeed(0); //32
@@ -65,7 +63,9 @@ void StarterBot::onFrame()
     //buildOrder();
 
     currentBuildOrder->Execute();
-    Tools::Scout(scout);
+    //Tools::Scout(scout);
+
+    //Micro::ScoutAndWander(scout);
 
     // Draw unit health bars, which brood war unfortunately does not do
     Tools::DrawUnitHealthBars();

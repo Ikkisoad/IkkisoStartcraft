@@ -1,6 +1,9 @@
 #include "micro.h"
 #include "Units.h"
 #include "BWAPI.h" // Ensure this header is included for TILE_SIZE definition
+#include <random>
+#include "../../BasesTools.h"
+#include "Tools.h"
 
 void Micro::SmartAttackUnit(BWAPI::Unit attacker, BWAPI::Unit target)
 {
@@ -16,13 +19,15 @@ void Micro::SmartMove(BWAPI::Unit unit, BWAPI::Position position)
     if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) return;
     if (unit->getLastCommand().getTargetPosition() == position) return;
 
-    // Check if the position is a walkable tile
-    int tileX = position.x / 32;
-    int tileY = position.y / 32;
-    if (!BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4)) return;
+    // Only check walkability for ground units
+    if (!unit->getType().isFlyer()) {
+        int tileX = position.x / 32;
+        int tileY = position.y / 32;
+        if (!BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4)) return;
+    }
 
     unit->move(position);
-    BWAPI::Broodwar->drawCircleMap(BWAPI::Position(position), 64, BWAPI::Colors::Green, true);
+    BWAPI::Broodwar->drawCircleMap(BWAPI::Position(position), 5, BWAPI::Colors::Green, true);
 }
 
 void Micro::SmartKiteTarget(BWAPI::Unit rangedUnit, BWAPI::Unit target)
@@ -65,4 +70,41 @@ void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
     }
     BWAPI::Position fleeVector(fleeX, fleeY);
     SmartMove(meleeUnit, fleeVector);
+}
+
+void Micro::ScoutAndWander(BWAPI::Unit scout)
+{
+    if (!scout) return;
+
+    // If the unit is not idle, let it finish its current command
+    if (!scout->isIdle()) return;
+
+    // 1. Try to find an unexplored start location
+    BWAPI::Position unexplored = BasesTools::FindUnexploredStarterPosition();
+    if (unexplored != BWAPI::Positions::None && !BWAPI::Broodwar->isExplored(BWAPI::TilePosition(unexplored)))
+    {
+        SmartMove(scout, unexplored);
+        return;
+    }
+
+    // 2. If all start locations are explored, wander to a random walkable position
+    int mapWidth = BWAPI::Broodwar->mapWidth() * 32;
+    int mapHeight = BWAPI::Broodwar->mapHeight() * 32;
+    static std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> distX(0, mapWidth - 1);
+    std::uniform_int_distribution<int> distY(0, mapHeight - 1);
+
+    for (int tries = 0; tries < 10; ++tries) // Try up to 10 times to find a walkable tile
+    {
+        int x = distX(rng);
+        int y = distY(rng);
+        BWAPI::Position pos(x, y);
+        int tileX = x / 32;
+        int tileY = y / 32;
+        if (scout->getType().isFlyer() || BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4))
+        {
+            SmartMove(scout, pos);
+            return;
+        }
+    }
 }

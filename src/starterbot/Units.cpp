@@ -121,11 +121,13 @@ BWAPI::Unit Units::GetNearestThreateningEnemyUnitOrFlee(BWAPI::Unit unit) {
 }
 
 // Attacks the nearest enemy unit to the given unit, if any
-void Units::AttackNearestEnemyUnit(BWAPI::Unit unit) {
+bool Units::AttackNearestEnemyUnit(BWAPI::Unit unit) {
     BWAPI::Unit nearestEnemy = GetNearestEnemyUnit(unit);
     if (nearestEnemy) {
         Attack(unit, nearestEnemy->getPosition());
+        return true;
     }
+    return false;
 }
 
 void Units::Attack(BWAPI::Unit unit, BWAPI::Position pos) {

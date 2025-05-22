@@ -25,7 +25,11 @@ void FourPool::Execute() {
         // Loop through offensive units (Zerglings, Hydralisks, etc.)
         const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
         for (auto& unit : myUnits) {
-            if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord && !unit->getType().isBuilding()) {
+            if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
+                Micro::ScoutAndWander(unit);
+                continue;
+            }
+            if (!unit->getType().isWorker() && !unit->getType().isBuilding()) {
                 // Validate if unit is healthy
 				auto possibleTarget = Units::GetNearestThreateningEnemyUnitOrFlee(unit);
                 if (BasesTools::GetEnemyBasePosition() != BWAPI::Positions::None && !possibleTarget) {
@@ -74,7 +78,9 @@ void FourPool::attack() {
                 //} else if (unit->isIdle()) {
                 //    Units::Attack(unit, enemyBase);
                 } else if (unit->isIdle()) {
-                    Units::AttackNearestEnemyUnit(unit);
+                    if (!Units::AttackNearestEnemyUnit(unit)) {
+						Micro::ScoutAndWander(unit);
+                    }
                 }
             }
         }
