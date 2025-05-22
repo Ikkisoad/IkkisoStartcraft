@@ -186,13 +186,15 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     // Find the closest enemy, preferring non-lethal, but fallback to lethal if needed
     for (auto enemy : enemies)
     {
-        if (!enemy || !enemy->exists() || enemy->getType().isBuilding()) continue;
+        //TODO prioritize offensive units > workers > buildings
+        //TODO prioritize lower HP units
+        if (!enemy || !enemy->exists()/* || enemy->getType().isBuilding()*/) continue;
 
         BWAPI::WeaponType weapon = enemy->getType().groundWeapon();
         if (unit->getType().isFlyer()) weapon = enemy->getType().airWeapon();
         int damage = weapon.damageAmount();
         int unitHP = unit->getHitPoints() + unit->getShields();
-        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
+        bool isLethal = (damage > 0 && damage >= unitHP);
 
         int dist = unit->getDistance(enemy);
         if (!isLethal) {

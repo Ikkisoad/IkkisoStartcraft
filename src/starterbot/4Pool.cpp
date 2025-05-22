@@ -88,7 +88,8 @@ void FourPool::attack() {
             } else {
                 if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { continue; }
                 if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
-                    Units::AttackNearestNonLethalEnemyUnit(unit);
+                    //Units::AttackNearestNonLethalEnemyUnit(unit);
+                    Micro::SmartAvoidLethalAndAttackNonLethal(unit);
                 } else {
                     unit->attack(enemyBase);
                 }
