@@ -3,7 +3,7 @@
 #include "../BWEM/bwem.h"  
 
 namespace BasesTools {
-	bool IsAreaEnemyBase(BWAPI::Position position);
+	bool IsAreaEnemyBase(BWAPI::Position position, int range);
 	void Initialize();
 	void CacheBWEMBases();
 	const std::vector<BWAPI::Position>& GetAllBasePositions();

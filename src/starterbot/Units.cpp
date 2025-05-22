@@ -1,5 +1,6 @@
 #include "Units.h"
 #include <BWAPI.h>
+#include "micro.h"
 #include <limits>
 #include <vector>
 
@@ -143,6 +144,58 @@ bool Units::AttackNearestEnemyUnit(BWAPI::Unit unit) {
         Attack(unit, nearestEnemy->getPosition());
         return true;
     }
+    return false;
+}
+
+// Attacks the nearest non-lethal enemy unit to the given unit, if any.
+// If all nearby enemies are lethal, does nothing.
+bool Units::AttackNearestNonLethalEnemyUnit(BWAPI::Unit unit) {
+    if (!unit || !unit->exists()) return false;
+
+    std::vector<BWAPI::Unit> nonLethalUnits;
+    std::vector<BWAPI::Unit> lethalUnits;
+
+    for (auto enemyUnit : BWAPI::Broodwar->getAllUnits()) {
+        if (!enemyUnit->exists()) continue;
+        if (enemyUnit->getPlayer() == BWAPI::Broodwar->self()) continue;
+        if (enemyUnit->getPlayer() == BWAPI::Broodwar->neutral()) continue;
+        if (!enemyUnit->isVisible()) continue;
+        if (enemyUnit->getType().isBuilding()) continue;
+
+        // Determine if this enemy is lethal to us
+        BWAPI::WeaponType weapon = unit->getType().isFlyer() ? enemyUnit->getType().airWeapon() : enemyUnit->getType().groundWeapon();
+        int damage = weapon.damageAmount();
+        int unitHP = unit->getHitPoints() + unit->getShields();
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
+
+        if (isLethal) {
+            lethalUnits.push_back(enemyUnit);
+        } else {
+            nonLethalUnits.push_back(enemyUnit);
+        }
+    }
+
+    auto getNearest = [&](const std::vector<BWAPI::Unit>& units) -> BWAPI::Unit {
+        BWAPI::Unit nearest = nullptr;
+        int minDistance = std::numeric_limits<int>::max();
+        for (auto u : units) {
+            int distance = unit->getDistance(u);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearest = u;
+            }
+        }
+        return nearest;
+    };
+
+    // Prefer attacking the nearest non-lethal enemy
+    BWAPI::Unit target = getNearest(nonLethalUnits);
+    if (target) {
+        Micro::SmartAttackUnit(unit, target);
+        return true;
+    }
+
+    // If no non-lethal enemies, do nothing (ignore lethal enemies)
     return false;
 }
 

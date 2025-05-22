@@ -42,7 +42,7 @@ void FourPool::Execute() {
             if (!enemies.empty()) {
                 Micro::SmartAvoidLethalAndAttackNonLethal(unit);
             } else {
-                if (!BasesTools::IsAreaEnemyBase(unit->getPosition())) {
+                if (!BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
                     attack();
                 }
             }
@@ -75,31 +75,22 @@ void FourPool::attack() {
 
     for (auto& unit : myUnits) {
         if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-            // Skip if in danger from a lethal enemy
+            // If there are enemies nearby, use micro logic
             Units unitsInstance;
             auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
-            bool inDanger = false;
-            for (auto& enemy : enemies) {
-                if (Units::isLethalTo(unit, enemy)) {
-                    inDanger = true;
-                    break;
-                }
+            if (!enemies.empty()) {
+                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                continue;
             }
-            if (inDanger) continue;
 
             if (enemyBase == BWAPI::Positions::None) {
-                //const auto unexploredStartingPosition = BasesTools::FindUnexploredStarterPosition();
-                //Units::Attack(unit, unexploredStartingPosition);
                 Micro::ScoutAndWander(unit);
             } else {
                 if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { continue; }
-                if (BasesTools::IsAreaEnemyBase(unit->getPosition())) {
-                    Units::AttackNearestEnemyUnit(unit);
+                if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
+                    Units::AttackNearestNonLethalEnemyUnit(unit);
                 } else {
-                    //if (!Units::AttackNearestEnemyUnit(unit)) {
-                    //    Micro::ScoutAndWander(unit);
-                    //}
-					unit->attack(enemyBase);
+                    unit->attack(enemyBase);
                 }
             }
         }
