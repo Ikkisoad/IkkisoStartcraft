@@ -45,6 +45,7 @@ void Micro::SmartKiteTarget(BWAPI::Unit rangedUnit, BWAPI::Unit target)
     }
 }
 
+//TODO avoid offensive unit and to attack other units if possible
 void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
     if (!meleeUnit) return;
 
@@ -142,4 +143,93 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
             return;
         }
     }
+}
+
+void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
+{
+    if (!unit) return;
+
+    Units unitsInstance;
+    auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640); // 320 = 10 tiles * 32 px
+
+    BWAPI::Unit lethalEnemy = nullptr;
+    BWAPI::Unit closestNonLethalTarget = nullptr;
+    int unitHP = unit->getHitPoints() + unit->getShields();
+    int minDist = std::numeric_limits<int>::max();
+
+    // Find the closest lethal enemy and closest non-lethal target
+    for (auto enemy : enemies)
+    {
+        if (!enemy || !enemy->exists() || enemy->getType().isBuilding()) continue;
+
+        BWAPI::WeaponType weapon = enemy->getType().groundWeapon();
+        if (unit->getType().isFlyer()) weapon = enemy->getType().airWeapon();
+
+        int damage = weapon.damageAmount();
+
+        // Consider enemy lethal if it can attack us and can kill us in 2 hits (tunable)
+        if (damage > 0 && damage * 2 >= unitHP)
+        {
+            if (!lethalEnemy || unit->getDistance(enemy) < unit->getDistance(lethalEnemy)) {
+                lethalEnemy = enemy;
+            }
+        }
+        else
+        {
+            int dist = unit->getDistance(enemy);
+            if (dist < minDist) {
+                minDist = dist;
+                closestNonLethalTarget = enemy;
+            }
+        }
+    }
+
+    const int RANGE_BUFFER = 8;
+
+    if (lethalEnemy)
+    {
+        int lethalRange = lethalEnemy->getType().groundWeapon().maxRange();
+        if (unit->getType().isFlyer()) {
+            lethalRange = lethalEnemy->getType().airWeapon().maxRange();
+        }
+        if (lethalRange <= 0) lethalRange = 32; // fallback
+
+        int distToLethal = unit->getDistance(lethalEnemy);
+        if (distToLethal <= lethalRange + RANGE_BUFFER) {
+            // Flee if in lethal range
+            BWAPI::Position myPos = unit->getPosition();
+            BWAPI::Position lethalPos = lethalEnemy->getPosition();
+            int dx = myPos.x - lethalPos.x;
+            int dy = myPos.y - lethalPos.y;
+            double length = std::sqrt(dx * dx + dy * dy);
+            const int FLEE_DISTANCE = 32; // 1 tile
+
+            int fleeX = myPos.x;
+            int fleeY = myPos.y;
+            if (length > 0.0) {
+                fleeX += static_cast<int>(FLEE_DISTANCE * dx / length);
+                fleeY += static_cast<int>(FLEE_DISTANCE * dy / length);
+            }
+            BWAPI::Position fleeVector(fleeX, fleeY);
+            SmartMove(unit, fleeVector);
+            return;
+        }
+    }
+
+    // Only attack if the target is non-lethal
+    if (closestNonLethalTarget)
+    {
+        SmartAttackUnit(unit, closestNonLethalTarget);
+        return;
+    }
+
+    // If there are only lethal enemies nearby, do NOT attack them if they can kill us in 1-2 hits
+    if (lethalEnemy)
+    {
+        // Optionally: move away or idle, but do not attack
+        // You could call SmartFleeUntilHealed or just return
+        return;
+    }
+
+    // No enemies nearby, do nothing
 }

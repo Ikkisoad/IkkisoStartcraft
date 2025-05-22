@@ -22,7 +22,6 @@ void FourPool::Execute() {
     if (zerglingRush) {
         Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
 
-        // Loop through offensive units (Zerglings, Hydralisks, etc.)
         const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
         for (auto& unit : myUnits) {
             if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
@@ -30,12 +29,17 @@ void FourPool::Execute() {
                 continue;
             }
             if (!unit->getType().isWorker() && !unit->getType().isBuilding()) {
-                // Validate if unit is healthy
-				auto possibleTarget = Units::GetNearestThreateningEnemyUnitOrFlee(unit);
-                if (BasesTools::GetEnemyBasePosition() != BWAPI::Positions::None && !possibleTarget) {
-                    Micro::SmartFleeUntilHealed(unit, possibleTarget); // Call the new flee function
+                // Only micro if the unit is not busy with something else
+                if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
+
+				//TODO Units still targeting lethal units
+                // If there are enemies nearby, micro; otherwise, attack
+                Units unitsInstance;
+                auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
+                if (!enemies.empty()) {
+                    Micro::SmartAvoidLethalAndAttackNonLethal(unit);
                 } else {
-                    attack(); // Run the attack method
+                    attack();
                 }
             }
         }
@@ -52,6 +56,13 @@ void FourPool::onUnitComplete(BWAPI::Unit unit) {
     if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
         zerglingRush = true;
     }
+}
+
+bool FourPool::isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy) {
+    BWAPI::WeaponType weapon = myUnit->getType().isFlyer() ? enemy->getType().airWeapon() : enemy->getType().groundWeapon();
+    int damage = weapon.damageAmount();
+    int unitHP = myUnit->getHitPoints() + myUnit->getShields();
+    return (damage > 0 && damage * 2 >= unitHP);
 }
 
 void FourPool::attack() {

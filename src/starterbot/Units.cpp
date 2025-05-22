@@ -120,6 +120,22 @@ BWAPI::Unit Units::GetNearestThreateningEnemyUnitOrFlee(BWAPI::Unit unit) {
     return target;
 }
 
+std::vector<BWAPI::Unit> Units::GetNearbyEnemyUnits(BWAPI::Unit unit, int radius) {
+    std::vector<BWAPI::Unit> result;
+    if (!unit) return result;
+
+    auto enemies = BWAPI::Broodwar->enemy();
+    if (!enemies) return result;
+
+    for (auto enemyUnit : enemies->getUnits()) {
+        if (!enemyUnit || !enemyUnit->exists()) continue;
+        if (unit->getDistance(enemyUnit) <= radius) {
+            result.push_back(enemyUnit);
+        }
+    }
+    return result;
+}
+
 // Attacks the nearest enemy unit to the given unit, if any
 bool Units::AttackNearestEnemyUnit(BWAPI::Unit unit) {
     BWAPI::Unit nearestEnemy = GetNearestEnemyUnit(unit);

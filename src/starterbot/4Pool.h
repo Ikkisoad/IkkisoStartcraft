@@ -8,6 +8,7 @@ public:
     void Execute() override;
     void OnUnitCreate(BWAPI::Unit unit) override;
     void onUnitComplete(BWAPI::Unit unit) override;
+    bool isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy);
     void attack();
 private:
     FourPool() = default;

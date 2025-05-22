@@ -9,4 +9,5 @@ namespace Micro
     void SmartKiteTarget(BWAPI::Unit rangedUnit, BWAPI::Unit target);
     void SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit);
     void ScoutAndWander(BWAPI::Unit scout);
+    void SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit);
 }
