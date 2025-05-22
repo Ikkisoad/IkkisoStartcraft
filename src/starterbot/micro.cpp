@@ -182,7 +182,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     BWAPI::Unit bestTarget = nullptr;
     int bestPriority = 100;
     int minDist = std::numeric_limits<int>::max();
-    bool bestTargetIsLethal = false;
+    bool bestTargetIsLethal = true; // Start with lethal as worst
 
     for (auto enemy : enemies)
     {
@@ -205,10 +205,10 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 
         int dist = unit->getDistance(enemy);
 
-        // Prefer higher priority, then non-lethal, then closer
-        if (priority < bestPriority ||
-            (priority == bestPriority && (!isLethal && bestTargetIsLethal)) ||
-            (priority == bestPriority && (isLethal == bestTargetIsLethal) && dist < minDist))
+        // Prefer non-lethal, then higher priority, then closer
+        if ((!isLethal && bestTargetIsLethal) ||
+            (isLethal == bestTargetIsLethal && priority < bestPriority) ||
+            (isLethal == bestTargetIsLethal && priority == bestPriority && dist < minDist))
         {
             bestTarget = enemy;
             bestPriority = priority;
