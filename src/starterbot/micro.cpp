@@ -206,7 +206,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     }
 
     if (closestLethal) {
-        // Flee from the closest lethal enemy in range
+        // Flee from the closest lethal enemy in range, but always slightly to the right or left
         BWAPI::Position myPos = unit->getPosition();
         BWAPI::Position lethalPos = closestLethal->getPosition();
         int dx = myPos.x - lethalPos.x;
@@ -214,13 +214,108 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         double length = std::sqrt(dx * dx + dy * dy);
 
         const int FLEE_DISTANCE = 32;
+        const int SIDE_STEP = 16; // Slightly to the side (half a tile)
         int fleeX = myPos.x;
         int fleeY = myPos.y;
         if (length > 0.0) {
             fleeX += static_cast<int>(FLEE_DISTANCE * dx / length);
             fleeY += static_cast<int>(FLEE_DISTANCE * dy / length);
+
+            // Perpendicular vector (right: -dy, dx)
+            int perpDx = -dy;
+            int perpDy = dx;
+            double perpLength = std::sqrt(perpDx * perpDx + perpDy * perpDy);
+            if (perpLength > 0.0) {
+                // Alternate between right and left based on unit id for determinism
+                int side = (unit->getID() % 2 == 0) ? 1 : -1;
+                fleeX += static_cast<int>(side * SIDE_STEP * perpDx / perpLength);
+                fleeY += static_cast<int>(side * SIDE_STEP * perpDy / perpLength);
+            }
         }
         BWAPI::Position fleeVector(fleeX, fleeY);
+
+        // Validate if the tile is walkable, if not flee directly to the right or left
+        int tileX = fleeVector.x / 32;
+        int tileY = fleeVector.y / 32;
+        bool isWalkable = unit->getType().isFlyer() || BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4);
+        if (!isWalkable) {
+            if (!isWalkable) {
+                // If not walkable, try to flee strictly perpendicular (left/right or up/down)
+                // Determine if horizontal or vertical flee is more open
+                int absDx = std::abs(dx);
+                int absDy = std::abs(dy);
+                const int SIDE_ONLY_STEP = 32; // 1 tile
+
+                // Try horizontal (left/right)
+                int leftX = myPos.x - SIDE_ONLY_STEP;
+                int leftY = myPos.y;
+                int rightX = myPos.x + SIDE_ONLY_STEP;
+                int rightY = myPos.y;
+                bool leftWalkable = BWAPI::Broodwar->isWalkable((leftX / 32) * 4, (leftY / 32) * 4);
+                bool rightWalkable = BWAPI::Broodwar->isWalkable((rightX / 32) * 4, (rightY / 32) * 4);
+
+                // Try vertical (up/down)
+                int upX = myPos.x;
+                int upY = myPos.y - SIDE_ONLY_STEP;
+                int downX = myPos.x;
+                int downY = myPos.y + SIDE_ONLY_STEP;
+                bool upWalkable = BWAPI::Broodwar->isWalkable((upX / 32) * 4, (upY / 32) * 4);
+                bool downWalkable = BWAPI::Broodwar->isWalkable((downX / 32) * 4, (downY / 32) * 4);
+
+                // Prefer the direction perpendicular to the main flee vector
+                if (absDx > absDy) {
+                    // Flee up or down
+                    if (upWalkable) {
+                        fleeVector = BWAPI::Position(upX, upY);
+                    } else if (downWalkable) {
+                        fleeVector = BWAPI::Position(downX, downY);
+                    } else if (leftWalkable) {
+                        fleeVector = BWAPI::Position(leftX, leftY);
+                    } else if (rightWalkable) {
+                        fleeVector = BWAPI::Position(rightX, rightY);
+                    }
+                    // else fallback to original fleeVector (will fail in SmartMove)
+                } else {
+                    // Flee left or right
+                    if (leftWalkable) {
+                        fleeVector = BWAPI::Position(leftX, leftY);
+                    } else if (rightWalkable) {
+                        fleeVector = BWAPI::Position(rightX, rightY);
+                    } else if (upWalkable) {
+                        fleeVector = BWAPI::Position(upX, upY);
+                    } else if (downWalkable) {
+                        fleeVector = BWAPI::Position(downX, downY);
+                    }
+                    // else fallback to original fleeVector (will fail in SmartMove)
+                }
+            }
+            // Try to the right (perpendicular to flee direction)
+            int perpDx = -dy;
+            int perpDy = dx;
+            double perpLength = std::sqrt(perpDx * perpDx + perpDy * perpDy);
+            const int SIDE_ONLY_STEP = 32; // 1 tile to the side
+            if (perpLength > 0.0) {
+                // Try right
+                int rightX = myPos.x + static_cast<int>(SIDE_ONLY_STEP * perpDx / perpLength);
+                int rightY = myPos.y + static_cast<int>(SIDE_ONLY_STEP * perpDy / perpLength);
+                int rightTileX = rightX / 32;
+                int rightTileY = rightY / 32;
+                if (BWAPI::Broodwar->isWalkable(rightTileX * 4, rightTileY * 4)) {
+                    fleeVector = BWAPI::Position(rightX, rightY);
+                } else {
+                    // Try left
+                    int leftX = myPos.x - static_cast<int>(SIDE_ONLY_STEP * perpDx / perpLength);
+                    int leftY = myPos.y - static_cast<int>(SIDE_ONLY_STEP * perpDy / perpLength);
+                    int leftTileX = leftX / 32;
+                    int leftTileY = leftY / 32;
+                    if (BWAPI::Broodwar->isWalkable(leftTileX * 4, leftTileY * 4)) {
+                        fleeVector = BWAPI::Position(leftX, leftY);
+                    }
+                    // If neither is walkable, fallback to original fleeVector (will fail in SmartMove)
+                }
+            }
+        }
+
         SmartMove(unit, fleeVector);
         return;
     }
