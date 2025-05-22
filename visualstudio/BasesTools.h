@@ -26,4 +26,5 @@ namespace BasesTools {
 	BWAPI::Position GetEnemyBasePosition();
 	BWAPI::Position GetNearestBasePosition(const BWAPI::Position& position);
 	void DrawAllBases(BWAPI::Color color);
+	void RemoveEnemyBasePosition(const BWAPI::Position pos);
 }

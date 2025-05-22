@@ -13,15 +13,15 @@ FourPool& FourPool::Instance() {
 
 bool zerglingRush = false;
 int healThreshold = 22; // Set the threshold for healing
-
+//TODO When the enemy base is already know units are wandering instead of attacking it
 void FourPool::Execute() {
     if (BWAPI::Broodwar->self()->minerals() >= 190) {
         Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
     }
-
-    if (zerglingRush) Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
-
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+
+    if (zerglingRush/* && Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Zergling, myUnits) < 2*/) Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
+
     for (auto& unit : myUnits) {
         if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
             Micro::ScoutAndWander(unit);
@@ -88,16 +88,18 @@ void FourPool::attack() {
             if (inDanger) continue;
 
             if (enemyBase == BWAPI::Positions::None) {
-                const auto unexploredStartingPosition = BasesTools::FindUnexploredStarterPosition();
-                Units::Attack(unit, unexploredStartingPosition);
+                //const auto unexploredStartingPosition = BasesTools::FindUnexploredStarterPosition();
+                //Units::Attack(unit, unexploredStartingPosition);
+                Micro::ScoutAndWander(unit);
             } else {
                 if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { continue; }
                 if (BasesTools::IsAreaEnemyBase(unit->getPosition())) {
                     Units::AttackNearestEnemyUnit(unit);
                 } else {
-                    if (!Units::AttackNearestEnemyUnit(unit)) {
-                        Micro::ScoutAndWander(unit);
-                    }
+                    //if (!Units::AttackNearestEnemyUnit(unit)) {
+                    //    Micro::ScoutAndWander(unit);
+                    //}
+					unit->attack(enemyBase);
                 }
             }
         }

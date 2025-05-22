@@ -12,7 +12,7 @@ BWAPI::TilePosition naturalBasePosition;
 BWAPI::TilePosition thirdBasePosition;
 BWAPI::TilePosition fourthBasePosition;
 BWAPI::TilePosition fifthBasePosition;
-
+//TODO remove destroyed bases
 // Store all known enemy base positions
 std::vector<BWAPI::Position> enemyBasePositions;
 
@@ -39,7 +39,7 @@ namespace BasesTools {
     }
 
     // Removes a specific enemy base position if it exists
-    void RemoveEnemyBasePosition(const BWAPI::Position& pos) {
+    void RemoveEnemyBasePosition(const BWAPI::Position pos) {
         auto it = std::remove(enemyBasePositions.begin(), enemyBasePositions.end(), pos);
         if (it != enemyBasePositions.end()) {
             enemyBasePositions.erase(it, enemyBasePositions.end());

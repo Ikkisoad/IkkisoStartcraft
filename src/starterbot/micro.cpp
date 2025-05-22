@@ -114,11 +114,35 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
     if (!scout) return;
     if (!scout->isIdle()) return;
 
-    // Use BasesTools::GetBWEMBases to get all base positions
+    // First, try to scout the nearest unexplored starting location
+    const auto& startLocations = BWAPI::Broodwar->getStartLocations();
+    BWAPI::TilePosition nearestUnexplored;
+    int minDist = std::numeric_limits<int>::max();
+    bool foundUnexplored = false;
+    for (const auto& startLoc : startLocations)
+    {
+        if (!BWAPI::Broodwar->isExplored(startLoc))
+        {
+            const int dist = scout->getDistance(BWAPI::Position(startLoc));
+            if (dist < minDist)
+            {
+                minDist = dist;
+                nearestUnexplored = startLoc;
+                foundUnexplored = true;
+            }
+        }
+    }
+    if (foundUnexplored)
+    {
+        SmartMove(scout, BWAPI::Position(nearestUnexplored));
+        return;
+    }
+
+    // Then, try to scout unexplored bases
     const auto& basePositions = BasesTools::GetBWEMBases();
     for (const auto& pos : basePositions)
     {
-        BWAPI::TilePosition tilePos(pos);
+        const BWAPI::TilePosition tilePos(pos);
         if (!BWAPI::Broodwar->isExplored(tilePos))
         {
             SmartMove(scout, pos);
@@ -126,9 +150,9 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
         }
     }
 
-    // If all bases are explored, wander randomly as before
-    int mapWidth = BWAPI::Broodwar->mapWidth() * 32;
-    int mapHeight = BWAPI::Broodwar->mapHeight() * 32;
+    // If all bases and start locations are explored, wander randomly
+    const int mapWidth = BWAPI::Broodwar->mapWidth() * 32;
+    const int mapHeight = BWAPI::Broodwar->mapHeight() * 32;
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> distX(0, mapWidth - 1);
     std::uniform_int_distribution<int> distY(0, mapHeight - 1);
@@ -187,7 +211,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         }
     }
 
-    const int RANGE_BUFFER = 8;
+    const int RANGE_BUFFER = 16;
 
     if (lethalEnemy)
     {

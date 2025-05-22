@@ -230,6 +230,15 @@ void StarterBot::onUnitDestroy(BWAPI::Unit unit)
     if (supplyProviderType == unit->getType()) {
         unusedSupplyAccepted--;
     }
+
+    // Remove enemy base if the destroyed unit was an enemy building at a known base position
+    if (unit->getPlayer() != BWAPI::Broodwar->self() &&
+        unit->getPlayer() != BWAPI::Broodwar->neutral() &&
+        unit->getType().isBuilding())
+    {
+        // Check if this building was at a known enemy base position (within a reasonable distance)
+        BasesTools::RemoveEnemyBasePosition(unit->getPosition());
+    }
 }
 
 // Called whenever a unit is morphed, with a pointer to the unit
@@ -352,17 +361,20 @@ void StarterBot::onUnitShow(BWAPI::Unit unit)
         unit->getPlayer() != BWAPI::Broodwar->neutral() &&
         unit->getType().isBuilding())
     {
-        // Check if the building is at a start location
-        for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
-            BWAPI::Position startPos(tile);
-            // If the building is close to a start location, update enemy base
-            if (unit->getPosition().getApproxDistance(startPos) < 256) {
-                BasesTools::SetEnemyBasePosition(startPos);
+        // Check if the building is close to any known base position
+        const auto& basePositions = BasesTools::GetBWEMBases();
+        bool foundBase = false;
+        for (const auto& basePos : basePositions) {
+            if (unit->getPosition().getApproxDistance(basePos) < 256) {
+                BasesTools::SetEnemyBasePosition(basePos);
+                foundBase = true;
                 break;
             }
         }
-        // Optionally: If you want to update to any seen enemy building position (not just start locations)
-        // BasesTools::SetEnemyBasePosition(unit->getPosition());
+        // If not close to any known base, use the building's position
+        if (!foundBase) {
+            BasesTools::SetEnemyBasePosition(unit->getPosition());
+        }
     }
 }
 
