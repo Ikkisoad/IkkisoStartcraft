@@ -19,29 +19,31 @@ void FourPool::Execute() {
         Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
     }
 
-    if (zerglingRush) {
-        Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
+    if (zerglingRush) Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
 
-        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-        for (auto& unit : myUnits) {
-            if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
-                Micro::ScoutAndWander(unit);
-                continue;
-            }
-            if (!unit->getType().isWorker() && !unit->getType().isBuilding()) {
-                // Only micro if the unit is not busy with something else
-                if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+    for (auto& unit : myUnits) {
+        if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
+            Micro::ScoutAndWander(unit);
+            continue;
+        }
+        if (unit->getType().isWorker()) {
+            Micro::SmartGatherMinerals(unit);
+            continue;
+        }
+        if (!unit->getType().isBuilding()) {
+            // Only micro if the unit is not busy with something else
+            if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
 
-				//TODO Units still targeting lethal units
-                // If there are enemies nearby, micro; otherwise, attack
-                Units unitsInstance;
-                auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
-                if (!enemies.empty()) {
-                    Micro::SmartAvoidLethalAndAttackNonLethal(unit);
-                } else {
-                    if (!BasesTools::IsAreaEnemyBase(unit->getPosition())) {
-                        attack();
-                    }
+			//TODO Units still targeting lethal units
+            // If there are enemies nearby, micro; otherwise, attack
+            Units unitsInstance;
+            auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
+            if (!enemies.empty()) {
+                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+            } else {
+                if (!BasesTools::IsAreaEnemyBase(unit->getPosition())) {
+                    attack();
                 }
             }
         }

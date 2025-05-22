@@ -238,3 +238,106 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 
     // No enemies nearby, do nothing
 }
+
+void Micro::SmartGatherMinerals(BWAPI::Unit drone)
+{
+    if (!drone || !drone->exists()) return;
+    if (!drone->isCompleted() || drone->isConstructing()) return;
+    if (!drone->getType().isWorker()) return;
+
+    // If the drone is already performing a move command, let it finish its current command
+    if (drone->getOrder() == BWAPI::Orders::Move) return;
+    // Prevent issuing gather if already gathering minerals
+    if (drone->getOrder() == BWAPI::Orders::MiningMinerals ||
+        drone->getOrder() == BWAPI::Orders::Harvest1 ||
+        drone->getOrder() == BWAPI::Orders::Harvest2)
+    {
+        return;
+    }
+
+    // If holding minerals, return to the closest hatchery
+    if (drone->isCarryingMinerals())
+    {
+        // Find the closest hatchery
+        BWAPI::Unit closestHatchery = nullptr;
+        int minDist = std::numeric_limits<int>::max();
+        for (auto& unit : BWAPI::Broodwar->self()->getUnits())
+        {
+            if (!unit->exists()) continue;
+            if (unit->getType() == BWAPI::UnitTypes::Zerg_Hatchery ||
+                unit->getType() == BWAPI::UnitTypes::Zerg_Lair ||
+                unit->getType() == BWAPI::UnitTypes::Zerg_Hive)
+            {
+                int dist = drone->getDistance(unit);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closestHatchery = unit;
+                }
+            }
+        }
+
+        if (closestHatchery)
+        {
+            const int RETURN_RADIUS = 32; // 1 tile
+            const int distToHatchery = drone->getDistance(closestHatchery);
+
+            if (distToHatchery < RETURN_RADIUS)
+            {
+                // If close enough, return cargo
+                if (drone->getOrder() != BWAPI::Orders::ReturnMinerals)
+                {
+                    drone->returnCargo();
+                }
+            }
+            else
+            {
+                // If not close enough, move to hatchery
+                if (drone->getOrderTarget() != closestHatchery || drone->getOrder() != BWAPI::Orders::Move)
+                {
+                    drone->move(closestHatchery->getPosition());
+                }
+            }
+        }
+        return;
+    }
+
+    // If not holding minerals, find the closest mineral patch
+    BWAPI::Unit closestMineral = nullptr;
+    int minDist = std::numeric_limits<int>::max();
+    for (auto& mineral : BWAPI::Broodwar->getMinerals())
+    {
+        if (!mineral->exists() || mineral->getResources() <= 0) continue;
+        int dist = drone->getDistance(mineral);
+        if (dist < minDist)
+        {
+            minDist = dist;
+            closestMineral = mineral;
+        }
+    }
+
+    if (closestMineral)
+    {
+        // If close enough, gather
+        if (drone->getDistance(closestMineral) < 64) // 2 tiles
+        {
+            // Only issue gather if the last command was not already a gather command
+            if (drone->getLastCommand().getType() != BWAPI::UnitCommandTypes::Gather) {
+                if (drone->getOrder() != BWAPI::Orders::MiningMinerals &&
+                    drone->getOrder() != BWAPI::Orders::Harvest1 &&
+                    drone->getOrder() != BWAPI::Orders::Harvest2)
+                {
+                    drone->gather(closestMineral);
+                }
+            }
+        }
+        else
+        {
+            // Move to mineral patch if not already moving there
+            if (drone->getOrderTarget() != closestMineral || drone->getOrder() != BWAPI::Orders::Move)
+            {
+                drone->move(closestMineral->getPosition());
+            }
+        }
+    }
+}
