@@ -60,7 +60,7 @@ void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
     int dx = myPos.x - enemyPos.x;
     int dy = myPos.y - enemyPos.y;
     double length = std::sqrt(dx * dx + dy * dy);
-    const int FLEE_DISTANCE = 2 * 32; // 2 tiles
+    const int FLEE_DISTANCE = 32; // 1 tiles
 
     int fleeX = myPos.x;
     int fleeY = myPos.y;
@@ -69,6 +69,41 @@ void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
         fleeY += static_cast<int>(FLEE_DISTANCE * dy / length);
     }
     BWAPI::Position fleeVector(fleeX, fleeY);
+
+    // Check if the flee position is walkable
+    int tileX = fleeVector.x / 32;
+    int tileY = fleeVector.y / 32;
+    bool isWalkable = meleeUnit->getType().isFlyer() || BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4);
+
+    if (!isWalkable) {
+        // Try to the right (perpendicular to flee direction)
+        int perpDx = -dy;
+        int perpDy = dx;
+        double perpLength = std::sqrt(perpDx * perpDx + perpDy * perpDy);
+        const int SIDE_STEP = 32; // 1 tile to the side
+
+        if (perpLength > 0.0) {
+            // Try right
+            int rightX = fleeX + static_cast<int>(SIDE_STEP * perpDx / perpLength);
+            int rightY = fleeY + static_cast<int>(SIDE_STEP * perpDy / perpLength);
+            int rightTileX = rightX / 32;
+            int rightTileY = rightY / 32;
+            if (BWAPI::Broodwar->isWalkable(rightTileX * 4, rightTileY * 4)) {
+                fleeVector = BWAPI::Position(rightX, rightY);
+            } else {
+                // Try left
+                int leftX = fleeX - static_cast<int>(SIDE_STEP * perpDx / perpLength);
+                int leftY = fleeY - static_cast<int>(SIDE_STEP * perpDy / perpLength);
+                int leftTileX = leftX / 32;
+                int leftTileY = leftY / 32;
+                if (BWAPI::Broodwar->isWalkable(leftTileX * 4, leftTileY * 4)) {
+                    fleeVector = BWAPI::Position(leftX, leftY);
+                }
+                // If neither is walkable, fallback to original fleeVector (will fail in SmartMove)
+            }
+        }
+    }
+
     SmartMove(meleeUnit, fleeVector);
 }
 

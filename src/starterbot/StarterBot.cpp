@@ -252,14 +252,17 @@ void StarterBot::onSendText(std::string text)
     }
     if (text == "e") { //Expand
     }
-    if (text == "1") { //Expand
+    if (text == "1") { //
         BWAPI::Broodwar->setLocalSpeed(0); //32
     }
-    if (text == "2") { //Expand
+    if (text == "2") { //
         BWAPI::Broodwar->setLocalSpeed(8); //32
     }
-    if (text == "3") { //Expand
+    if (text == "3") { //
         BWAPI::Broodwar->setLocalSpeed(32); //32
+    }
+    if (text == "4") { //
+        BWAPI::Broodwar->setLocalSpeed(128); //32
     }
 }
 
