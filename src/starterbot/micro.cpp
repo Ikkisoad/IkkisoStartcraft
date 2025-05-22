@@ -196,7 +196,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         bool isLethal = (damage > 0 && damage >= unitHP);
 
         int dist = unit->getDistance(unit->getType().isFlyer() ? enemy->getPosition() : enemy->getPosition());
-        const int RANGE_BUFFER = 16;
+        const int RANGE_BUFFER = 64;
         if (isLethal && dist <= range + RANGE_BUFFER) {
             if (dist < minLethalDist) {
                 minLethalDist = dist;
@@ -213,7 +213,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         int dy = myPos.y - lethalPos.y;
         double length = std::sqrt(dx * dx + dy * dy);
 
-        const int FLEE_DISTANCE = 64;
+        const int FLEE_DISTANCE = 32;
         int fleeX = myPos.x;
         int fleeY = myPos.y;
         if (length > 0.0) {
