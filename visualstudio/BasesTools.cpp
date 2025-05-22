@@ -53,6 +53,12 @@ namespace BasesTools {
         bwem.EnableAutomaticPathAnalysis();
         int baseCount = bwem.BaseCount();
         Tools::print(std::to_string(baseCount));
+        enemyBasePosition = BWAPI::Positions::None;
+        mainBasePosition = BWAPI::TilePositions::None;
+        naturalBasePosition = BWAPI::TilePositions::None;
+        thirdBasePosition = BWAPI::TilePositions::None;
+        fourthBasePosition = BWAPI::TilePositions::None;
+        fifthBasePosition = BWAPI::TilePositions::None;
 	}
 
     void BasesTools::FindExpansionsV1() {
@@ -132,13 +138,24 @@ namespace BasesTools {
     }
 
     BWAPI::Position BasesTools::FindUnexploredStarterPosition() {
+        BWAPI::Position pos = BWAPI::Position(0, 0);
         for (const auto& tile : BWAPI::Broodwar->getStartLocations()) {
             if (tile != BWAPI::Broodwar->self()->getStartLocation() && !BWAPI::Broodwar->isExplored(tile)) {
-                return BWAPI::Position(tile);
-                break;
+                if (pos == BWAPI::Position(0, 0)) {
+                    pos = BWAPI::Position(tile);
+                    continue;
+                } 
+                auto testedTile = BWAPI::Position(tile);
+                // Compare distances to (0,0) as a fallback, or to our main base if available
+                BWAPI::Position mainBase = BWAPI::Position(mainBasePosition);
+                int testedDist = testedTile.getApproxDistance(mainBase);
+                int posDist = pos.getApproxDistance(mainBase);
+                if (testedDist < posDist) {
+                    pos = testedTile;
+                }
             }
         }
-		return enemyBasePosition; // Return the enemy base position if no unexplored tile is found
+        return (pos != BWAPI::Position(0, 0)) ? pos : enemyBasePosition; // Return the enemy base position if no unexplored tile is found
     }
 
     BWAPI::TilePosition BasesTools::GetMainBasePosition() {

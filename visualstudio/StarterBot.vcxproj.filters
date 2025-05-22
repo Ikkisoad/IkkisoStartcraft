@@ -55,6 +55,7 @@
     <ClCompile Include="..\src\starterbot\4Pool.cpp">
       <Filter>BOs</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\starterbot\micro.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
@@ -67,6 +68,7 @@
       <Filter>BOs</Filter>
     </ClInclude>
     <ClInclude Include="src\starterbot\BuildOrder.h" />
+    <ClInclude Include="..\src\starterbot\micro.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="BWEM">
