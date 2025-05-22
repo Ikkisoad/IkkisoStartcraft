@@ -38,9 +38,39 @@ void FourPool::Execute() {
 			//TODO Units still targeting lethal units
             // If there are enemies nearby, micro; otherwise, attack
             Units unitsInstance;
-            auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
+            auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 1280);
             if (!enemies.empty()) {
-                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                // Check for nearest offensive enemy unit
+                BWAPI::Unit nearestOffensive = nullptr;
+                int minDist = 1200;
+                int enemyCount = 0;
+                for (auto enemy : enemies) {
+                    if (!enemy || !enemy->exists()) continue;
+                    // Offensive: can attack, not worker, not building
+                    if (enemy->getType().canAttack() && !enemy->getType().isWorker() && !enemy->getType().isBuilding()) {
+                        int dist = unit->getDistance(enemy);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            nearestOffensive = enemy;
+                        }
+                        enemyCount++;
+                    }
+                }
+                // Count nearby allies (excluding buildings and workers)
+                int allyCount = 0;
+                for (auto ally : BWAPI::Broodwar->self()->getUnits()) {
+                    if (!ally || !ally->exists()) continue;
+                    if (ally->getType().isBuilding() || ally->getType().isWorker()) continue;
+                    if (unit->getDistance(ally) <= 160) { // 5 tiles radius
+                        allyCount++;
+                    }
+                }
+                // If we have at least 2x as many allies as offensive enemies, attack the nearest offensive enemy
+                if (nearestOffensive && allyCount >= enemyCount * 2 && enemyCount > 0) {
+                    Micro::SmartAttackUnit(unit, nearestOffensive);
+                } else {
+                    Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                }
             } else {
                 if (!BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
                     attack();
