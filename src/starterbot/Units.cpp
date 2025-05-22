@@ -152,3 +152,11 @@ void Units::Attack(BWAPI::Unit unit, BWAPI::Position pos) {
         unit->attack(pos);
 	}
 }
+
+bool Units::isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy) {
+    if (!myUnit || !enemy) return false;
+    BWAPI::WeaponType weapon = myUnit->getType().isFlyer() ? enemy->getType().airWeapon() : enemy->getType().groundWeapon();
+    int damage = weapon.damageAmount();
+    int unitHP = myUnit->getHitPoints() + myUnit->getShields();
+    return (damage > 0 && damage * 2 >= unitHP);
+}

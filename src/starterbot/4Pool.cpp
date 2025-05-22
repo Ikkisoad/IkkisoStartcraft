@@ -39,7 +39,9 @@ void FourPool::Execute() {
                 if (!enemies.empty()) {
                     Micro::SmartAvoidLethalAndAttackNonLethal(unit);
                 } else {
-                    attack();
+                    if (!BasesTools::IsAreaEnemyBase(unit->getPosition())) {
+                        attack();
+                    }
                 }
             }
         }
@@ -67,30 +69,32 @@ bool FourPool::isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy) {
 
 void FourPool::attack() {
     const BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
-    //TODO If in enemy base area, attack nearest enemy unit
-    if (enemyBase == BWAPI::Positions::None) {
-		const auto unexploredStartingPosition = BasesTools::FindUnexploredStarterPosition();
-        // fallback: attack nearest enemy unit as before
-        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-        for (auto& unit : myUnits) {
-            if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-                Units::Attack(unit, unexploredStartingPosition);
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+
+    for (auto& unit : myUnits) {
+        if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
+            // Skip if in danger from a lethal enemy
+            Units unitsInstance;
+            auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
+            bool inDanger = false;
+            for (auto& enemy : enemies) {
+                if (Units::isLethalTo(unit, enemy)) {
+                    inDanger = true;
+                    break;
+                }
             }
-        }
-    } else {
-        // attack the known enemy base position
-        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-        for (auto& unit : myUnits) {
-            if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-                if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()/* || !unit->isIdle()*/) { continue; }
-                
+            if (inDanger) continue;
+
+            if (enemyBase == BWAPI::Positions::None) {
+                const auto unexploredStartingPosition = BasesTools::FindUnexploredStarterPosition();
+                Units::Attack(unit, unexploredStartingPosition);
+            } else {
+                if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { continue; }
                 if (BasesTools::IsAreaEnemyBase(unit->getPosition())) {
                     Units::AttackNearestEnemyUnit(unit);
-                //} else if (unit->isIdle()) {
-                //    Units::Attack(unit, enemyBase);
-                } else if (unit->isIdle()) {
+                } else {
                     if (!Units::AttackNearestEnemyUnit(unit)) {
-						Micro::ScoutAndWander(unit);
+                        Micro::ScoutAndWander(unit);
                     }
                 }
             }

@@ -49,8 +49,9 @@ void StarterBot::onStart()
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
-    BasesTools::FindExpansionsV1();
-	BasesTools::DrawExpansions();
+    //BasesTools::FindExpansionsV1();
+	//BasesTools::DrawExpansions();
+    BasesTools::DrawAllBases(BWAPI::Colors::Yellow);
     // Update our MapTools information
     m_mapTools.onFrame();
 

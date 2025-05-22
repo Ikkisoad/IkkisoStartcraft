@@ -11,6 +11,7 @@ void Micro::SmartAttackUnit(BWAPI::Unit attacker, BWAPI::Unit target)
     if (attacker->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) return;
     if (attacker->getLastCommand().getTarget() == target) return;
     attacker->attack(target);
+    BWAPI::Broodwar->drawCircleMap(target->getPosition(), 3, BWAPI::Colors::Red, true);
 }
 
 void Micro::SmartMove(BWAPI::Unit unit, BWAPI::Position position)
@@ -111,26 +112,28 @@ void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
 void Micro::ScoutAndWander(BWAPI::Unit scout)
 {
     if (!scout) return;
-
-    // If the unit is not idle, let it finish its current command
     if (!scout->isIdle()) return;
 
-    // 1. Try to find an unexplored start location
-    BWAPI::Position unexplored = BasesTools::FindUnexploredStarterPosition();
-    if (unexplored != BWAPI::Positions::None && !BWAPI::Broodwar->isExplored(BWAPI::TilePosition(unexplored)))
+    // Use BasesTools::GetBWEMBases to get all base positions
+    const auto& basePositions = BasesTools::GetBWEMBases();
+    for (const auto& pos : basePositions)
     {
-        SmartMove(scout, unexplored);
-        return;
+        BWAPI::TilePosition tilePos(pos);
+        if (!BWAPI::Broodwar->isExplored(tilePos))
+        {
+            SmartMove(scout, pos);
+            return;
+        }
     }
 
-    // 2. If all start locations are explored, wander to a random walkable position
+    // If all bases are explored, wander randomly as before
     int mapWidth = BWAPI::Broodwar->mapWidth() * 32;
     int mapHeight = BWAPI::Broodwar->mapHeight() * 32;
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> distX(0, mapWidth - 1);
     std::uniform_int_distribution<int> distY(0, mapHeight - 1);
 
-    for (int tries = 0; tries < 10; ++tries) // Try up to 10 times to find a walkable tile
+    for (int tries = 0; tries < 10; ++tries)
     {
         int x = distX(rng);
         int y = distY(rng);
@@ -202,7 +205,9 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
             int dx = myPos.x - lethalPos.x;
             int dy = myPos.y - lethalPos.y;
             double length = std::sqrt(dx * dx + dy * dy);
-            const int FLEE_DISTANCE = 32; // 1 tile
+
+            // Use a fixed flee distance of 2 tiles (64 pixels)
+            const int FLEE_DISTANCE = 64;
 
             int fleeX = myPos.x;
             int fleeY = myPos.y;
