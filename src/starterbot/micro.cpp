@@ -180,15 +180,22 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
 
     BWAPI::Unit bestTarget = nullptr;
+    int bestPriority = 100;
     int minDist = std::numeric_limits<int>::max();
     bool bestTargetIsLethal = false;
 
-    // Find the closest enemy, preferring non-lethal, but fallback to lethal if needed
     for (auto enemy : enemies)
     {
-        //TODO prioritize offensive units > workers > buildings
-        //TODO prioritize lower HP units
-        if (!enemy || !enemy->exists()/* || enemy->getType().isBuilding()*/) continue;
+        if (!enemy || !enemy->exists()) continue;
+
+        // Assign priority: 0 = offensive, 1 = worker, 2 = building, 3 = other
+        int priority = 3;
+        if (enemy->getType().canAttack() && !enemy->getType().isWorker() && !enemy->getType().isBuilding())
+            priority = 0;
+        else if (enemy->getType().isWorker())
+            priority = 1;
+        else if (enemy->getType().isBuilding())
+            priority = 2;
 
         BWAPI::WeaponType weapon = enemy->getType().groundWeapon();
         if (unit->getType().isFlyer()) weapon = enemy->getType().airWeapon();
@@ -197,23 +204,21 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         bool isLethal = (damage > 0 && damage >= unitHP);
 
         int dist = unit->getDistance(enemy);
-        if (!isLethal) {
-            if (!bestTarget || bestTargetIsLethal || dist < minDist) {
-                bestTarget = enemy;
-                minDist = dist;
-                bestTargetIsLethal = false;
-            }
-        } else if (!bestTarget || (bestTargetIsLethal && dist < minDist)) {
+
+        // Prefer higher priority, then non-lethal, then closer
+        if (priority < bestPriority ||
+            (priority == bestPriority && (!isLethal && bestTargetIsLethal)) ||
+            (priority == bestPriority && (isLethal == bestTargetIsLethal) && dist < minDist))
+        {
             bestTarget = enemy;
+            bestPriority = priority;
             minDist = dist;
-            bestTargetIsLethal = true;
+            bestTargetIsLethal = isLethal;
         }
     }
 
-    // If no target, do nothing
     if (!bestTarget) return;
 
-    // If the best target is lethal, check if we should flee
     if (bestTargetIsLethal) {
         int lethalRange = bestTarget->getType().groundWeapon().maxRange();
         if (unit->getType().isFlyer()) {
@@ -249,7 +254,6 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         }
     }
 
-    // Otherwise, attack the best target (lethal or not)
     SmartAttackUnit(unit, bestTarget);
 }
 
