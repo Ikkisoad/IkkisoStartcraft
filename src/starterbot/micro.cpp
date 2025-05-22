@@ -179,6 +179,53 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     Units unitsInstance;
     auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
 
+    // First, flee if any lethal enemy is in range
+    BWAPI::Unit closestLethal = nullptr;
+    int minLethalDist = std::numeric_limits<int>::max();
+
+    for (auto enemy : enemies)
+    {
+        if (!enemy || !enemy->exists()) continue;
+
+        BWAPI::WeaponType weapon = unit->getType().isFlyer() ? enemy->getType().airWeapon() : enemy->getType().groundWeapon();
+        int damage = weapon.damageAmount();
+        int range = weapon.maxRange();
+        if (range <= 0) range = 32; // fallback for melee
+
+        int unitHP = unit->getHitPoints() + unit->getShields();
+        bool isLethal = (damage > 0 && damage >= unitHP);
+
+        int dist = unit->getDistance(unit->getType().isFlyer() ? enemy->getPosition() : enemy->getPosition());
+        const int RANGE_BUFFER = 16;
+        if (isLethal && dist <= range + RANGE_BUFFER) {
+            if (dist < minLethalDist) {
+                minLethalDist = dist;
+                closestLethal = enemy;
+            }
+        }
+    }
+
+    if (closestLethal) {
+        // Flee from the closest lethal enemy in range
+        BWAPI::Position myPos = unit->getPosition();
+        BWAPI::Position lethalPos = closestLethal->getPosition();
+        int dx = myPos.x - lethalPos.x;
+        int dy = myPos.y - lethalPos.y;
+        double length = std::sqrt(dx * dx + dy * dy);
+
+        const int FLEE_DISTANCE = 64;
+        int fleeX = myPos.x;
+        int fleeY = myPos.y;
+        if (length > 0.0) {
+            fleeX += static_cast<int>(FLEE_DISTANCE * dx / length);
+            fleeY += static_cast<int>(FLEE_DISTANCE * dy / length);
+        }
+        BWAPI::Position fleeVector(fleeX, fleeY);
+        SmartMove(unit, fleeVector);
+        return;
+    }
+
+    // --- Target selection with priority system ---
     BWAPI::Unit bestTarget = nullptr;
     int bestPriority = 100;
     int minDist = std::numeric_limits<int>::max();
@@ -218,41 +265,6 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     }
 
     if (!bestTarget) return;
-
-    if (bestTargetIsLethal) {
-        int lethalRange = bestTarget->getType().groundWeapon().maxRange();
-        if (unit->getType().isFlyer()) {
-            lethalRange = bestTarget->getType().airWeapon().maxRange();
-        }
-        if (lethalRange <= 0) lethalRange = 32; // fallback
-
-        int distToLethal = unit->getDistance(bestTarget);
-        int damage = unit->getType().isFlyer() ? bestTarget->getType().airWeapon().damageAmount()
-                                               : bestTarget->getType().groundWeapon().damageAmount();
-        int unitHP = unit->getHitPoints() + unit->getShields();
-        int hitsToDie = (damage > 0) ? (unitHP + damage - 1) / damage : 1000;
-
-        const int RANGE_BUFFER = 16;
-        if (distToLethal <= lethalRange + RANGE_BUFFER && hitsToDie <= 2) {
-            // Flee if in lethal range and low health
-            BWAPI::Position myPos = unit->getPosition();
-            BWAPI::Position lethalPos = bestTarget->getPosition();
-            int dx = myPos.x - lethalPos.x;
-            int dy = myPos.y - lethalPos.y;
-            double length = std::sqrt(dx * dx + dy * dy);
-
-            const int FLEE_DISTANCE = 64;
-            int fleeX = myPos.x;
-            int fleeY = myPos.y;
-            if (length > 0.0) {
-                fleeX += static_cast<int>(FLEE_DISTANCE * dx / length);
-                fleeY += static_cast<int>(FLEE_DISTANCE * dy / length);
-            }
-            BWAPI::Position fleeVector(fleeX, fleeY);
-            SmartMove(unit, fleeVector);
-            return;
-        }
-    }
 
     SmartAttackUnit(unit, bestTarget);
 }
