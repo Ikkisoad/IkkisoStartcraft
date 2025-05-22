@@ -220,7 +220,23 @@ void StarterBot::drawDebugInformation()
 // Called whenever the game ends and tells you if you won or not
 void StarterBot::onEnd(bool isWinner)
 {
+    std::string oponentName = "";
+    for (auto player : BWAPI::Broodwar->getPlayers()) {
+        if (player != BWAPI::Broodwar->self()) {
+            oponentName = player->getName();
+        }
+    }
+    LogGameStats(oponentName, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
     std::cout << "We " << (isWinner ? "won!" : "lost!") << "\n";
+}
+
+//TODO This doesn't work
+void StarterBot::LogGameStats(const std::string& opponent, const std::string& map, const std::string& strategy, bool win) {
+    std::ofstream file("stats/game_stats.csv", std::ios::app);
+    if (file.is_open()) {
+        file << opponent << "," << map << "," << strategy << "," << (win ? "1" : "0") << "\n";
+        file.close();
+    }
 }
 
 // Called whenever a unit is destroyed, with a pointer to the unit

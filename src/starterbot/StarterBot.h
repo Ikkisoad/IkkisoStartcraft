@@ -36,4 +36,5 @@ public:
 	void onUnitShow(BWAPI::Unit unit);
 	void onUnitHide(BWAPI::Unit unit);
 	void onUnitRenegade(BWAPI::Unit unit);
+	void LogGameStats(const std::string& opponent, const std::string& map, const std::string& strategy, bool win);
 };

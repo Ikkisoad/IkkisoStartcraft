@@ -10,6 +10,7 @@ public:
     void onUnitComplete(BWAPI::Unit unit) override;
     bool isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy);
     void attack();
+    std::string GetName() const override { return "FourPool"; }
 private:
     FourPool() = default;
 };
