@@ -172,9 +172,6 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
     }
 }
 
-// TODO Vicinity strength - test if there are enough ally units nearby to overwell the enemy
-// TODO Rabge safety - If a ranged unit kills us in two hits, don't enter its range
-// TODO Consider enemy lethal range as its range + 2 tiles
 void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 {
     if (!unit) return;
