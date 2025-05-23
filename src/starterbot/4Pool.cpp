@@ -35,10 +35,8 @@ void FourPool::Execute() {
             // Only micro if the unit is not busy with something else
             if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
 
-			//TODO Units still targeting lethal units
-            // If there are enemies nearby, micro; otherwise, attack
-            Units unitsInstance;
-            auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 1280);
+            // Use spatial queries for efficiency
+            auto enemies = unit->getUnitsInRadius(1280, BWAPI::Filter::IsEnemy && BWAPI::Filter::Exists);
             if (!enemies.empty()) {
                 // Check for nearest offensive enemy unit
                 BWAPI::Unit nearestOffensive = nullptr;
@@ -58,13 +56,8 @@ void FourPool::Execute() {
                 }
                 // Count nearby allies (excluding buildings and workers)
                 int allyCount = 0;
-                for (auto ally : BWAPI::Broodwar->self()->getUnits()) {
-                    if (!ally || !ally->exists()) continue;
-                    if (ally->getType().isBuilding() || ally->getType().isWorker()) continue;
-                    if (unit->getDistance(ally) <= 160) { // 5 tiles radius
-                        allyCount++;
-                    }
-                }
+                auto alliesNearby = unit->getUnitsInRadius(160, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
+                allyCount = static_cast<int>(alliesNearby.size());
                 // If we have at least 2x as many allies as offensive enemies, attack the nearest offensive enemy
                 if (nearestOffensive && allyCount >= enemyCount * 2 && enemyCount > 0) {
                     Micro::SmartAttackUnit(unit, nearestOffensive);
