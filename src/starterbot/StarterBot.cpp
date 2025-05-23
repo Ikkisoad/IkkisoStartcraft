@@ -26,7 +26,7 @@ void StarterBot::onStart()
     BasesTools::Initialize();
 
     // Select the build order type you want to use
-    BuildOrderType selectedBuildOrder = BuildOrderType::FivePool;
+    BuildOrderType selectedBuildOrder = BuildOrderType::SixPool;
     currentBuildOrder = BuildOrderFactory::Create(selectedBuildOrder);
 
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
@@ -44,6 +44,8 @@ void StarterBot::onStart()
     //Send first scout
     Tools::Scout(scout);
     BasesTools::FindExpansions();
+
+    currentBuildOrder->onStart();
 }
 
 // Called on each frame of the game
@@ -86,7 +88,7 @@ void StarterBot::buildOrder() {
         }
     }
 
-    if (Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Zergling, BWAPI::Broodwar->self()->getUnits()) < lingsWanted) {
+    if (Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Zergling, BWAPI::Broodwar->self()->getUnits(), false) < lingsWanted) {
         trainUnit(BWAPI::UnitTypes::Zerg_Zergling);
     }
 
@@ -125,7 +127,7 @@ bool StarterBot::buildBuilding(BWAPI::UnitType building, int limitAmount = 0, BW
         return false;
     }
 
-    if (limitAmount != 0 && Tools::CountUnitsOfType(building, BWAPI::Broodwar->self()->getUnits()) >= limitAmount) {
+    if (limitAmount != 0 && Tools::CountUnitsOfType(building, BWAPI::Broodwar->self()->getUnits(), false) >= limitAmount) {
         return false;
     }
 
@@ -166,7 +168,7 @@ void StarterBot::sendIdleWorkersToMinerals()
 void StarterBot::trainAdditionalWorkers()
 {
     const BWAPI::UnitType workerType = BWAPI::Broodwar->self()->getRace().getWorker();
-    const int workersOwned = Tools::CountUnitsOfType(workerType, BWAPI::Broodwar->self()->getUnits());
+    const int workersOwned = Tools::CountUnitsOfType(workerType, BWAPI::Broodwar->self()->getUnits(), false);
     if (workersOwned < workersWanted)
     {
         // get the unit pointer to my depot

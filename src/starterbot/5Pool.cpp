@@ -11,12 +11,16 @@ FivePool& FivePool::Instance() {
 FivePool::FivePool() : builtExtraDrone(false) {}
 //FivePool::FivePool() : zerglingRush(false) {}
 
+void FivePool::onStart() {
+    builtExtraDrone = false;
+}
+
 void FivePool::Execute() {
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
 
     // Build one extra drone at the start (5 pool)
     if (!builtExtraDrone) {
-        int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits);
+        int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits, true);
         if (droneCount < 5 && BWAPI::Broodwar->self()->minerals() >= 50) {
             Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Drone);
             return;

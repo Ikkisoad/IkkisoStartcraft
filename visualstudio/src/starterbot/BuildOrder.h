@@ -7,5 +7,6 @@ public:
     virtual void Execute() = 0;
     virtual void OnUnitCreate(BWAPI::Unit unit) {};
     virtual void onUnitComplete(BWAPI::Unit unit) {};
+    virtual void onStart() {};
     virtual std::string GetName() const = 0;
 };

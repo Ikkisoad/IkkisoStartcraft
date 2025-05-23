@@ -21,12 +21,13 @@ BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Unit unit, const BWAPI::Unitset& unit
     return GetClosestUnitTo(unit->getPosition(), units);
 }
 
-int Tools::CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units)
+int Tools::CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units, const bool inProgress)
 {
     int sum = 0;
     for (auto& unit : units)
     {
-        if (unit->getType() == type)
+        //Count units that are being produced
+        if (unit->getType() == type || unit->getBuildType() == type && inProgress)
         {
             sum++;
         }
@@ -92,7 +93,7 @@ bool Tools::TryBuildBuilding(BWAPI::UnitType building, int limitAmount = 0, BWAP
         return false;
     }
 
-    if (limitAmount != 0 && Tools::CountUnitsOfType(building, BWAPI::Broodwar->self()->getUnits()) >= limitAmount) {
+    if (limitAmount != 0 && Tools::CountUnitsOfType(building, BWAPI::Broodwar->self()->getUnits(), true) >= limitAmount) {
         return false;
     }
 

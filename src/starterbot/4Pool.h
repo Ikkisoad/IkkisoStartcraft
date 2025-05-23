@@ -9,6 +9,7 @@ public:
     void OnUnitCreate(BWAPI::Unit unit) override;
     void onUnitComplete(BWAPI::Unit unit) override;
     bool isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy);
+    void onStart() override;
     void attack();
     std::string GetName() const override { return "FourPool"; }
 private:

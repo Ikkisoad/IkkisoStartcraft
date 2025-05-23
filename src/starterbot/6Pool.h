@@ -1,15 +1,16 @@
 #pragma once
 #include "../../src/starterbot/BuildOrder.h"
+#include <BWAPI.h>
 
-class FivePool : public BuildOrder {
+class SixPool : public BuildOrder {
 public:
-    static FivePool& Instance();
+    static SixPool& Instance();
     void Execute() override;
     void OnUnitCreate(BWAPI::Unit unit) override;
     void onUnitComplete(BWAPI::Unit unit) override;
     void onStart() override;
-    std::string GetName() const override { return "FivePool"; }
-    FivePool();
+    std::string GetName() const override { return "SixPool"; }
 private:
-    bool builtExtraDrone = false;
+    SixPool() = default;
+    bool builtSixDrones = false;
 };

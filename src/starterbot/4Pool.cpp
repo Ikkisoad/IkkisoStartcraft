@@ -91,3 +91,7 @@ bool FourPool::isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy) {
     int unitHP = myUnit->getHitPoints() + myUnit->getShields();
     return (damage > 0 && damage * 2 >= unitHP);
 }
+
+void FourPool::onStart() {
+    zerglingRush = false;
+}

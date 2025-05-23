@@ -191,13 +191,36 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     Units unitsInstance;
     auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
 
-    // First, flee if any lethal enemy is in range
+    // --- Lethal building prioritization: attack at all costs ---
+    BWAPI::Unit lethalBuilding = nullptr; // Declare it once at the top of the relevant scope
+    int lethalBuildingDist = std::numeric_limits<int>::max();
+    for (auto enemy : enemies) {
+        if (!enemy || !enemy->exists()) continue;
+        if (!enemy->getType().isBuilding()) continue;
+
+        BWAPI::WeaponType weapon = unit->getType().isFlyer() ? enemy->getType().airWeapon() : enemy->getType().groundWeapon();
+        int damage = weapon.damageAmount();
+        int unitHP = unit->getHitPoints() + unit->getShields();
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
+
+        int dist = unit->getDistance(enemy);
+        if (isLethal && dist < lethalBuildingDist) {
+            lethalBuilding = enemy;
+            lethalBuildingDist = dist;
+        }
+    }
+    if (lethalBuilding) {
+        SmartAttackUnit(unit, lethalBuilding);
+        return;
+    }
+
+    // --- Flee if any other lethal enemy is in range ---
     BWAPI::Unit closestLethal = nullptr;
     int minLethalDist = std::numeric_limits<int>::max();
-
     for (auto enemy : enemies)
     {
         if (!enemy || !enemy->exists()) continue;
+        if (enemy->getType().isBuilding()) continue; // Already handled above
 
         BWAPI::WeaponType weapon = unit->getType().isFlyer() ? enemy->getType().airWeapon() : enemy->getType().groundWeapon();
         int damage = weapon.damageAmount();
@@ -205,10 +228,9 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         if (range <= 0) range = 32; // fallback for melee
 
         int unitHP = unit->getHitPoints() + unit->getShields();
-        // Lethal if enemy can kill us in two hits
-        bool isLethal = (damage > 0 && damage * 2 >= unitHP/* && damage * 2 < unit->getInitialHitPoints()*/);
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
 
-        int dist = unit->getDistance(unit->getType().isFlyer() ? enemy->getPosition() : enemy->getPosition());
+        int dist = unit->getDistance(enemy);
         const int RANGE_BUFFER = 64;
         if (isLethal && dist <= range + RANGE_BUFFER) {
             if (dist < minLethalDist) {
@@ -372,7 +394,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         if (unit->getType().isFlyer()) weapon = enemy->getType().airWeapon();
         int damage = weapon.damageAmount();
         int unitHP = unit->getHitPoints() + unit->getShields();
-        bool isLethal = (damage > 0 && damage * 2 >= unitHP/* && damage * 2 < unit->getInitialHitPoints()*/);
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
 
         int dist = unit->getDistance(enemy);
 
