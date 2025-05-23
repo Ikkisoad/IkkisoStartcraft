@@ -339,6 +339,11 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     int minDist = std::numeric_limits<int>::max();
     bool bestTargetIsLethal = true; // Start with lethal as worst
 
+    // For building targeting
+    BWAPI::Unit lowestPercentHPBuilding = nullptr;
+    double lowestPercent = 1.1; // > 100%
+    int lowestAbsHP = std::numeric_limits<int>::max();
+
     for (auto enemy : enemies)
     {
         if (!enemy || !enemy->exists()) continue;
@@ -360,6 +365,21 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 
         int dist = unit->getDistance(enemy);
 
+        // Track lowest percent HP building, break ties with lowest absolute HP
+        if (priority == 2) {
+            int hp = enemy->getHitPoints();
+            int maxHp = enemy->getType().maxHitPoints();
+            if (maxHp > 0) {
+                double percent = static_cast<double>(hp) / maxHp;
+                if (percent < lowestPercent ||
+                    (percent == lowestPercent && hp < lowestAbsHP)) {
+                    lowestPercent = percent;
+                    lowestAbsHP = hp;
+                    lowestPercentHPBuilding = enemy;
+                }
+            }
+        }
+
         // Prefer non-lethal, then higher priority, then closer
         if ((!isLethal && bestTargetIsLethal) ||
             (isLethal == bestTargetIsLethal && priority < bestPriority) ||
@@ -371,6 +391,10 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
             bestTargetIsLethal = isLethal;
         }
     }
+
+    // If the best target is a building, prefer the lowest percent HP building (break ties with lowest HP)
+    if (bestTarget && bestPriority == 2 && lowestPercentHPBuilding)
+        bestTarget = lowestPercentHPBuilding;
 
     if (!bestTarget) return;
 
