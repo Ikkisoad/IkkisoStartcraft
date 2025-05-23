@@ -36,11 +36,11 @@ void FourPool::Execute() {
             if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
 
             // Use spatial queries for efficiency
-            auto enemies = unit->getUnitsInRadius(1280, BWAPI::Filter::IsEnemy && BWAPI::Filter::Exists);
+            auto enemies = unit->getUnitsInRadius(640, BWAPI::Filter::IsEnemy && BWAPI::Filter::Exists);
             if (!enemies.empty()) {
                 // Check for nearest offensive enemy unit
                 BWAPI::Unit nearestOffensive = nullptr;
-                int minDist = 1200;
+                int minDist = 645;
                 int enemyCount = 0;
                 for (auto enemy : enemies) {
                     if (!enemy || !enemy->exists()) continue;
@@ -56,10 +56,10 @@ void FourPool::Execute() {
                 }
                 // Count nearby allies (excluding buildings and workers)
                 int allyCount = 0;
-                auto alliesNearby = unit->getUnitsInRadius(160, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
+                auto alliesNearby = unit->getUnitsInRadius(96, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
                 allyCount = static_cast<int>(alliesNearby.size());
                 // If we have at least 2x as many allies as offensive enemies, attack the nearest offensive enemy
-                if (nearestOffensive && allyCount >= enemyCount * 2 && enemyCount > 0) {
+                if (nearestOffensive && allyCount >= enemyCount * 2 && enemyCount > 0 && false) {
                     Micro::SmartAttackUnit(unit, nearestOffensive);
                 } else {
                     Micro::SmartAvoidLethalAndAttackNonLethal(unit);

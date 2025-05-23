@@ -179,6 +179,15 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 {
     if (!unit) return;
 
+    // If the unit is stuck, attack the nearest enemy unit
+    if (unit->isStuck()) {
+        BWAPI::Unit nearest = Units::GetNearestEnemyUnit(unit);
+        if (nearest) {
+            SmartAttackUnit(unit, nearest);
+        }
+        return;
+    }
+
     Units unitsInstance;
     auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
 
@@ -196,7 +205,8 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         if (range <= 0) range = 32; // fallback for melee
 
         int unitHP = unit->getHitPoints() + unit->getShields();
-        bool isLethal = (damage > 0 && damage >= unitHP);
+        // Lethal if enemy can kill us in two hits
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
 
         int dist = unit->getDistance(unit->getType().isFlyer() ? enemy->getPosition() : enemy->getPosition());
         const int RANGE_BUFFER = 64;
@@ -343,6 +353,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     BWAPI::Unit lowestPercentHPBuilding = nullptr;
     double lowestPercent = 1.1; // > 100%
     int lowestAbsHP = std::numeric_limits<int>::max();
+    const int MAX_BUILDING_TARGET_DIST = 320; // Only skip full-HP buildings farther than this
 
     for (auto enemy : enemies)
     {
@@ -361,7 +372,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         if (unit->getType().isFlyer()) weapon = enemy->getType().airWeapon();
         int damage = weapon.damageAmount();
         int unitHP = unit->getHitPoints() + unit->getShields();
-        bool isLethal = (damage > 0 && damage >= unitHP);
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
 
         int dist = unit->getDistance(enemy);
 
@@ -371,6 +382,8 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
             int maxHp = enemy->getType().maxHitPoints();
             if (maxHp > 0) {
                 double percent = static_cast<double>(hp) / maxHp;
+                // Skip if building is at 100% HP and too far away
+                if (percent >= 1.0 && dist > MAX_BUILDING_TARGET_DIST) continue;
                 if (percent < lowestPercent ||
                     (percent == lowestPercent && hp < lowestAbsHP)) {
                     lowestPercent = percent;
