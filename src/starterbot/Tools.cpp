@@ -1,4 +1,7 @@
 #include "Tools.h"
+#include <BWAPI.h>
+#include <vector>
+#include <algorithm>
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
@@ -97,7 +100,7 @@ bool Tools::TryBuildBuilding(BWAPI::UnitType building, int limitAmount = 0, BWAP
         return false;
     }
 
-    return Tools::BuildBuilding(building, desiredPos);
+    return Tools::BuildBuildingOptimal(building, desiredPos);
 }
 
 bool Tools::TrainUnit(BWAPI::UnitType unit) {
@@ -138,6 +141,81 @@ bool Tools::BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos =
     bool buildingOnCreep = type.requiresCreep();
     BWAPI::TilePosition buildPos = BWAPI::Broodwar->getBuildLocation(type, desiredPos, maxBuildRange, buildingOnCreep);
     return builder->build(type, buildPos);
+}
+
+// Helper: Checks if a tile is near any mineral patch or hatchery
+static bool IsNearMiningPath(const BWAPI::TilePosition& tile, int buffer = 2) {
+    for (auto& mineral : BWAPI::Broodwar->getMinerals()) {
+        if (!mineral->exists()) continue;
+        BWAPI::TilePosition mineralTile = mineral->getTilePosition();
+        if (BWAPI::Position(tile).getApproxDistance(BWAPI::Position(mineralTile)) < buffer * 32)
+            return true;
+    }
+    for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
+        if (unit->getType() == BWAPI::UnitTypes::Zerg_Hatchery ||
+            unit->getType() == BWAPI::UnitTypes::Zerg_Lair ||
+            unit->getType() == BWAPI::UnitTypes::Zerg_Hive) {
+            BWAPI::TilePosition hatchTile = unit->getTilePosition();
+            if (BWAPI::Position(tile).getApproxDistance(BWAPI::Position(hatchTile)) < buffer * 32)
+                return true;
+        }
+    }
+    return false;
+}
+
+// Attempts to build a building at the optimal location near the closest builder to desiredPos
+bool Tools::BuildBuildingOptimal(BWAPI::UnitType type, BWAPI::TilePosition desiredPos) {
+    // Get the type of unit that is required to build the desired building
+    BWAPI::UnitType builderType = type.whatBuilds().first;
+    BWAPI::Unit builder = nullptr;
+
+    // Find the closest available builder to the desired position
+    int minDist = std::numeric_limits<int>::max();
+    for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
+        if (unit->getType() == builderType && unit->isCompleted() && !unit->isConstructing()) {
+            int dist = unit->getDistance(BWAPI::Position(desiredPos));
+            if (dist < minDist) {
+                minDist = dist;
+                builder = unit;
+            }
+        }
+    }
+    if (!builder) return false;
+
+    int maxBuildRange = 16; // Tight range for fast buildings like Spawning Pool
+    bool buildingOnCreep = type.requiresCreep();
+    BWAPI::TilePosition startTile = builder->getTilePosition();
+
+    // Search for a valid build location near the builder, avoiding mining paths
+    BWAPI::TilePosition bestPos = BWAPI::TilePositions::Invalid;
+    int bestDist = std::numeric_limits<int>::max();
+
+    for (int dx = -maxBuildRange; dx <= maxBuildRange; ++dx) {
+        for (int dy = -maxBuildRange; dy <= maxBuildRange; ++dy) {
+            BWAPI::TilePosition candidate = startTile + BWAPI::TilePosition(dx, dy);
+            if (!candidate.isValid()) continue;
+            if (!BWAPI::Broodwar->canBuildHere(candidate, type, builder, buildingOnCreep)) continue;
+            if (IsNearMiningPath(candidate, 2)) continue; // Avoid mining path
+
+            int dist = builder->getDistance(BWAPI::Position(candidate));
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestPos = candidate;
+            }
+        }
+    }
+
+    if (bestPos.isValid()) {
+        return builder->build(type, bestPos);
+    }
+
+    // Fallback: use BWAPI's default search if no optimal found
+    BWAPI::TilePosition fallback = BWAPI::Broodwar->getBuildLocation(type, desiredPos, 64, buildingOnCreep);
+    if (fallback.isValid()) {
+        return builder->build(type, fallback);
+    }
+
+    return false;
 }
 
 void Tools::DrawUnitCommands()

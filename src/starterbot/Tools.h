@@ -20,6 +20,7 @@ namespace Tools
     bool BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos);
 
     void DrawUnitBoundingBoxes();
+    bool BuildBuildingOptimal(BWAPI::UnitType type, BWAPI::TilePosition desiredPos);
     void DrawUnitCommands();
 
     void SmartRightClick(BWAPI::Unit unit, BWAPI::Unit target);
