@@ -206,7 +206,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 
         int unitHP = unit->getHitPoints() + unit->getShields();
         // Lethal if enemy can kill us in two hits
-        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP/* && damage * 2 < unit->getInitialHitPoints()*/);
 
         int dist = unit->getDistance(unit->getType().isFlyer() ? enemy->getPosition() : enemy->getPosition());
         const int RANGE_BUFFER = 64;
@@ -372,7 +372,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         if (unit->getType().isFlyer()) weapon = enemy->getType().airWeapon();
         int damage = weapon.damageAmount();
         int unitHP = unit->getHitPoints() + unit->getShields();
-        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP/* && damage * 2 < unit->getInitialHitPoints()*/);
 
         int dist = unit->getDistance(enemy);
 
@@ -512,6 +512,35 @@ void Micro::SmartGatherMinerals(BWAPI::Unit drone)
             if (drone->getOrderTarget() != closestMineral || drone->getOrder() != BWAPI::Orders::Move)
             {
                 drone->move(closestMineral->getPosition());
+            }
+        }
+    }
+}
+
+void Micro::attack() {
+    const BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+
+    for (auto& unit : myUnits) {
+        if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
+            // If there are enemies nearby, use micro logic
+            Units unitsInstance;
+            auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
+            if (!enemies.empty()) {
+                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                continue;
+            }
+
+            if (enemyBase == BWAPI::Positions::None) {
+                Micro::ScoutAndWander(unit);
+            } else {
+                if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { continue; }
+                if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
+                    //Units::AttackNearestNonLethalEnemyUnit(unit);
+                    Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                } else {
+                    unit->attack(enemyBase);
+                }
             }
         }
     }

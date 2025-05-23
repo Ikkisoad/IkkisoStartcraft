@@ -1,26 +1,37 @@
-#include "4Pool.h"
+#include "5Pool.h"
 #include "Tools.h"
 #include "../../visualstudio/BasesTools.h"
-#include "../../BWEM/bwem.h"  
-#include "../../starterbot/Units.cpp"
 #include "micro.h"
 
-// Singleton instance
-FourPool& FourPool::Instance() {
-    static FourPool instance;
+FivePool& FivePool::Instance() {
+    static FivePool instance;
     return instance;
 }
 
-bool zerglingRush = false;
-int healThreshold = 22; // Set the threshold for healing
-//TODO When the enemy base is already know units are wandering instead of attacking it
-void FourPool::Execute() {
+FivePool::FivePool() : builtExtraDrone(false) {}
+//FivePool::FivePool() : zerglingRush(false) {}
+
+void FivePool::Execute() {
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+
+    // Build one extra drone at the start (5 pool)
+    if (!builtExtraDrone) {
+        int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits);
+        if (droneCount < 5 && BWAPI::Broodwar->self()->minerals() >= 50) {
+            Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Drone);
+            return;
+        }
+        if (droneCount >= 5) {
+            builtExtraDrone = true;
+        }
+    }
+
+    // Now proceed with 4 pool logic
     if (BWAPI::Broodwar->self()->minerals() >= 190) {
         Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
     }
-    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
 
-    if (zerglingRush/* && Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Zergling, myUnits) < 2*/) Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
+    if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)/* && Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Zergling, myUnits) < 2*/) Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
 
     for (auto& unit : myUnits) {
         if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
@@ -73,21 +84,10 @@ void FourPool::Execute() {
     }
 }
 
-void FourPool::OnUnitCreate(BWAPI::Unit unit) {
-    if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
-        Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Extractor, 1, unit->getTilePosition());
-    }
+void FivePool::OnUnitCreate(BWAPI::Unit unit) {
+    // Optionally, add extractor trick or other logic here
 }
 
-void FourPool::onUnitComplete(BWAPI::Unit unit) {
-    if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
-        zerglingRush = true;
-    }
-}
-
-bool FourPool::isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy) {
-    BWAPI::WeaponType weapon = myUnit->getType().isFlyer() ? enemy->getType().airWeapon() : enemy->getType().groundWeapon();
-    int damage = weapon.damageAmount();
-    int unitHP = myUnit->getHitPoints() + myUnit->getShields();
-    return (damage > 0 && damage * 2 >= unitHP);
+void FivePool::onUnitComplete(BWAPI::Unit unit) {
+    // Optionally, add logic for when units complete
 }

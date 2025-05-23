@@ -11,4 +11,5 @@ namespace Micro
     void ScoutAndWander(BWAPI::Unit scout);
     void SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit);
     void SmartGatherMinerals(BWAPI::Unit drone);
+    void attack();
 }
