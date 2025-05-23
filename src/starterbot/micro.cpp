@@ -112,7 +112,43 @@ void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
 void Micro::ScoutAndWander(BWAPI::Unit scout)
 {
     if (!scout) return;
-    if (!scout->isIdle()) return;
+    //if (!scout->isIdle()) return;
+
+    // Flee if being attacked
+    if (scout->isUnderAttack()) {
+        // Find the nearest enemy unit
+        BWAPI::Unit nearestEnemy = Units::GetNearestEnemyUnit(scout);
+        if (nearestEnemy) {
+            // Flee away from the nearest enemy
+            BWAPI::Position myPos = scout->getPosition();
+            BWAPI::Position enemyPos = nearestEnemy->getPosition();
+            int dx = myPos.x - enemyPos.x;
+            int dy = myPos.y - enemyPos.y;
+            double length = std::sqrt(dx * dx + dy * dy);
+            const int FLEE_DISTANCE = 64; // 2 tiles
+
+            int fleeX = myPos.x;
+            int fleeY = myPos.y;
+            if (length > 0.0) {
+                fleeX += static_cast<int>(FLEE_DISTANCE * dx / length);
+                fleeY += static_cast<int>(FLEE_DISTANCE * dy / length);
+            }
+            BWAPI::Position fleeVector(fleeX, fleeY);
+
+            // Only check walkability for ground units
+            if (!scout->getType().isFlyer()) {
+                int tileX = fleeVector.x / 32;
+                int tileY = fleeVector.y / 32;
+                if (!BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4)) {
+                    // If not walkable, just move in a random direction
+                    fleeVector = myPos + BWAPI::Position(rand() % 128 - 64, rand() % 128 - 64);
+                }
+            }
+
+            scout->move(fleeVector);
+            return;
+        }
+    }
 
     // First, try to scout the nearest unexplored starting location
     const auto& startLocations = BWAPI::Broodwar->getStartLocations();

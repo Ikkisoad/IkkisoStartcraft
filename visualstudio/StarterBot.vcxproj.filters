@@ -56,7 +56,6 @@
       <Filter>BOs</Filter>
     </ClCompile>
     <ClCompile Include="..\src\starterbot\micro.cpp" />
-    <ClCompile Include="..\src\starterbot\5Pool.cpp" />
     <ClCompile Include="..\src\starterbot\6Pool.cpp">
       <Filter>BOs</Filter>
     </ClCompile>
@@ -64,6 +63,9 @@
       <Filter>BOs</Filter>
     </ClCompile>
     <ClCompile Include="..\src\starterbot\8Pool.cpp">
+      <Filter>BOs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\starterbot\5Pool.cpp">
       <Filter>BOs</Filter>
     </ClCompile>
   </ItemGroup>
@@ -79,7 +81,6 @@
     </ClInclude>
     <ClInclude Include="src\starterbot\BuildOrder.h" />
     <ClInclude Include="..\src\starterbot\micro.h" />
-    <ClInclude Include="..\src\starterbot\5Pool.h" />
     <ClInclude Include="..\src\starterbot\6Pool.h">
       <Filter>BOs</Filter>
     </ClInclude>
@@ -87,6 +88,9 @@
       <Filter>BOs</Filter>
     </ClInclude>
     <ClInclude Include="..\src\starterbot\8Pool.h">
+      <Filter>BOs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\starterbot\5Pool.h">
       <Filter>BOs</Filter>
     </ClInclude>
   </ItemGroup>
