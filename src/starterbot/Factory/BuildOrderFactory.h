@@ -4,8 +4,9 @@
 #include "4Pool.h"
 #include "5Pool.h"
 #include "6Pool.h"
+#include "7Pool.h"
 
-enum class BuildOrderType { FourPool, FivePool, SixPool };
+enum class BuildOrderType { FourPool, FivePool, SixPool, SevenPool };
 
 class BuildOrderFactory {
 public:
@@ -14,7 +15,7 @@ public:
             case BuildOrderType::FourPool: return &FourPool::Instance();
             case BuildOrderType::FivePool: return &FivePool::Instance();
             case BuildOrderType::SixPool: return &SixPool::Instance();
-            // case BuildOrderType::OtherBuildOrder: return &OtherBuildOrder::Instance();
+            case BuildOrderType::SevenPool: return &SevenPool::Instance();
             default: return nullptr;
         }
     }

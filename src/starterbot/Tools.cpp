@@ -100,7 +100,6 @@ bool Tools::TryBuildBuilding(BWAPI::UnitType building, int limitAmount = 0, BWAP
     return Tools::BuildBuilding(building, desiredPos);
 }
 
-// Train more workers so we can gather more income
 bool Tools::TrainUnit(BWAPI::UnitType unit) {
     const BWAPI::Unit myDepot = Tools::GetDepot();
 
@@ -108,6 +107,17 @@ bool Tools::TrainUnit(BWAPI::UnitType unit) {
     // there is no reason for a bot to ever use the unit queueing system, it just wastes resources
     if (myDepot) {
         return myDepot->train(unit);
+    }
+    return false;
+}
+
+bool Tools::MorphLarva(BWAPI::UnitType unit) {
+    const BWAPI::Unit larva = Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Larva);
+
+    // if we have a valid depot unit and it's currently not training something, train a worker
+    // there is no reason for a bot to ever use the unit queueing system, it just wastes resources
+    if (larva) {
+        return larva->train(unit);
     }
     return false;
 }

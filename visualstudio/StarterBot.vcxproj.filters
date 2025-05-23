@@ -60,6 +60,9 @@
     <ClCompile Include="..\src\starterbot\6Pool.cpp">
       <Filter>BOs</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\starterbot\7Pool.cpp">
+      <Filter>BOs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
@@ -75,6 +78,9 @@
     <ClInclude Include="..\src\starterbot\micro.h" />
     <ClInclude Include="..\src\starterbot\5Pool.h" />
     <ClInclude Include="..\src\starterbot\6Pool.h">
+      <Filter>BOs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\starterbot\7Pool.h">
       <Filter>BOs</Filter>
     </ClInclude>
   </ItemGroup>

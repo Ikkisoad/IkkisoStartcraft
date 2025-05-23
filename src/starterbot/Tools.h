@@ -16,6 +16,7 @@ namespace Tools
 
     bool TryBuildBuilding(BWAPI::UnitType building, int limitAmount, BWAPI::TilePosition desiredPos);
     bool TrainUnit(BWAPI::UnitType unit);
+    bool MorphLarva(BWAPI::UnitType unit);
     bool BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos);
 
     void DrawUnitBoundingBoxes();

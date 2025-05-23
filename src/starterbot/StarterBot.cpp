@@ -26,7 +26,7 @@ void StarterBot::onStart()
     BasesTools::Initialize();
 
     // Select the build order type you want to use
-    BuildOrderType selectedBuildOrder = BuildOrderType::SixPool;
+    BuildOrderType selectedBuildOrder = BuildOrderType::SevenPool;
     currentBuildOrder = BuildOrderFactory::Create(selectedBuildOrder);
 
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);

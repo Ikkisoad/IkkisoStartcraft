@@ -22,6 +22,7 @@
     <ClInclude Include="..\src\starterbot\4Pool.h" />
     <ClInclude Include="..\src\starterbot\5Pool.h" />
     <ClInclude Include="..\src\starterbot\6Pool.h" />
+    <ClInclude Include="..\src\starterbot\7Pool.h" />
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
     <ClInclude Include="..\src\starterbot\MapTools.h" />
     <ClInclude Include="..\src\starterbot\micro.h" />
@@ -50,6 +51,7 @@
     <ClCompile Include="..\src\starterbot\4Pool.cpp" />
     <ClCompile Include="..\src\starterbot\5Pool.cpp" />
     <ClCompile Include="..\src\starterbot\6Pool.cpp" />
+    <ClCompile Include="..\src\starterbot\7Pool.cpp" />
     <ClCompile Include="..\src\starterbot\main.cpp" />
     <ClCompile Include="..\src\starterbot\MapTools.cpp" />
     <ClCompile Include="..\src\starterbot\micro.cpp" />
