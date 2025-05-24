@@ -52,6 +52,7 @@ void StarterBot::onStart()
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
+    BasesTools::VerifyEnemyBases();
     BasesTools::DrawEnemyBases(BWAPI::Colors::Orange);
     //BasesTools::FindExpansionsV1();
 	//BasesTools::DrawExpansions();
@@ -235,7 +236,7 @@ void StarterBot::onUnitDestroy(BWAPI::Unit unit)
     if (supplyProviderType == unit->getType()) {
         unusedSupplyAccepted--;
     }
-
+    BasesTools::OnUnitDestroyed(unit);
     // Remove enemy base if the destroyed unit was an enemy building at a known base position
     if (unit->getPlayer() != BWAPI::Broodwar->self() &&
         unit->getPlayer() != BWAPI::Broodwar->neutral() &&
@@ -370,7 +371,7 @@ void StarterBot::onUnitShow(BWAPI::Unit unit)
         const auto& basePositions = BasesTools::GetBWEMBases();
         bool foundBase = false;
         for (const auto& basePos : basePositions) {
-            if (unit->getPosition().getApproxDistance(basePos) < 256) {
+            if (unit->getPosition().getApproxDistance(basePos) < 1280) {
                 BasesTools::SetEnemyBasePosition(basePos);
                 foundBase = true;
                 break;

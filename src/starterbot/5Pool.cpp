@@ -37,7 +37,14 @@ void FivePool::Execute() {
         Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
     }
 
-    if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)/* && Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Zergling, myUnits) < 2*/) Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
+    // Train zerglings when pool is done
+    if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)) {
+        Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Zergling);
+
+        if (BWAPI::Broodwar->self()->minerals() >= 350) {
+            Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
+        }
+    }
 
     Micro::BasicAttackAndScoutLoop(myUnits);
 }

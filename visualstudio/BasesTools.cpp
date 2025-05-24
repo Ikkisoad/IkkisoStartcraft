@@ -4,6 +4,7 @@
 #include <BWAPI.h>  
 #include "../BWEM/bwem.h"  
 #include "../src/starterbot/Tools.h"
+#include <random>
 
 auto& bwem = BWEM::Map::Instance();  
 
@@ -27,6 +28,28 @@ namespace BasesTools {
         auto it = std::find(enemyBasePositions.begin(), enemyBasePositions.end(), pos);
         if (it == enemyBasePositions.end()) {
             enemyBasePositions.push_back(pos);
+        }
+    }
+
+    // Not working properly
+    void BasesTools::VerifyEnemyBases() {
+		bool breakLoop = false;
+        for (auto base : enemyBasePositions) {
+            breakLoop = false;
+			BWAPI::TilePosition tilePosition = BWAPI::TilePosition(base);
+			if (!BWAPI::Broodwar->isVisible(tilePosition)) continue;
+            for (auto unit : BWAPI::Broodwar->getUnitsOnTile(tilePosition.x, tilePosition.y)) {
+                if (unit->getType() == BWAPI::UnitTypes::Resource_Vespene_Geyser) break;
+                if (unit->getType().isBuilding() && unit->exists()) {
+                    if (unit->getPlayer() != BWAPI::Broodwar->self() && BWAPI::Broodwar->neutral() != unit->getPlayer()) {
+						// If the building is an enemy building, do nothing
+						breakLoop = true;
+						break;
+					}
+                }
+            }
+            if (breakLoop) continue;
+            RemoveEnemyBasePosition(base);
         }
     }
 
@@ -91,9 +114,12 @@ namespace BasesTools {
     }
 
     void BasesTools::Initialize() {
+        //if (bwem.Initialized()) bwem.ResetInstance();            
         bwem.Initialize(BWAPI::BroodwarPtr);
         bwem.EnableAutomaticPathAnalysis();
+        bwem.FindBasesForStartingLocations();
         int baseCount = bwem.BaseCount();
+        Tools::print("Base count vvv");
         Tools::print(std::to_string(baseCount));
         enemyBasePositions.clear();
         mainBasePosition = BWAPI::TilePositions::None;
@@ -102,6 +128,11 @@ namespace BasesTools {
         fourthBasePosition = BWAPI::TilePositions::None;
         fifthBasePosition = BWAPI::TilePositions::None;
         CacheBWEMBases(); // <-- Add this line to cache base positions on initialization
+    }
+
+    void BasesTools::OnUnitDestroyed(BWAPI::Unit unit) {
+        if (unit->getType().isSpecialBuilding()) bwem.OnStaticBuildingDestroyed(unit);
+        if (unit->getType().isMineralField()) bwem.OnMineralDestroyed(unit);
     }
 
     void BasesTools::FindExpansionsV1() {
@@ -215,7 +246,7 @@ namespace BasesTools {
 
     std::vector<BWAPI::Position> BasesTools::GetBWEMBases() {
         std::vector<BWAPI::Position> basePositions;
-        for (auto area : bwem.Areas()) {
+        for (auto area : BWEM::Map::Instance().Areas()) {
             for (auto& base : area.Bases()) {
                 BWAPI::Position pos(base.Location());
                 basePositions.push_back(pos);
@@ -246,7 +277,8 @@ namespace BasesTools {
 
     void BasesTools::DrawEnemyBases(BWAPI::Color color) {
         for (const auto& pos : enemyBasePositions) {
-            BWAPI::Broodwar->drawCircleMap(pos, 10, color, true);
+            BWAPI::Broodwar->drawCircleMap(pos, 5, color, true);
+            BWAPI::Broodwar->drawTextMap(pos, "Enemy Base\n %i %i", pos.x, pos.y);
         }
     }
 }

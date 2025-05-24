@@ -5,6 +5,8 @@
 #include "../../BasesTools.h"
 #include "Tools.h"
 
+int safeRange = 64;
+
 void Micro::SmartAttackUnit(BWAPI::Unit attacker, BWAPI::Unit target)
 {
     if (!attacker || !target) return;
@@ -163,6 +165,13 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
             {
                 minDist = dist;
                 nearestUnexplored = startLoc;
+
+                for (auto unit : BWAPI::Broodwar->getAllUnits()) {
+                    if (unit->getPlayer() == BWAPI::Broodwar->self() && unit->getLastCommand().getType() == BWAPI::UnitCommandTypes::Move && unit->getOrderTargetPosition() == BWAPI::Position(startLoc)) {
+                        continue;
+                    }
+                }
+
                 foundUnexplored = true;
             }
         }
@@ -216,7 +225,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 
     Units unitsInstance;
     // If the unit is stuck, attack the nearest enemy unit
-    if (unit->isStuck() || unitsInstance.GetNearbyEnemyUnits(unit, 16).size() > 0 && unit->getGroundWeaponCooldown() == 0) {
+    if (unit->isStuck()) {
         BWAPI::Unit nearest = Units::GetNearestEnemyUnit(unit);
         if (nearest) {
             SmartAttackUnit(unit, nearest);
@@ -245,12 +254,14 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         }
     }
     if (lethalBuilding) {
+        BWAPI::Broodwar->drawTextMap(unit->getPosition(), "Attack lethal building");
         SmartAttackUnit(unit, lethalBuilding);
         return;
     }
-
+	bool cantFlee = false; // Flag to indicate if fleeing is possible
     // --- Flee if any other lethal enemy is in range ---
     BWAPI::Unit closestLethal = nullptr;
+    int range = -1;
     int minLethalDist = std::numeric_limits<int>::max();
     for (auto enemy : enemies)
     {
@@ -259,15 +270,15 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 
         BWAPI::WeaponType weapon = unit->getType().isFlyer() ? enemy->getType().airWeapon() : enemy->getType().groundWeapon();
         int damage = weapon.damageAmount();
-        int range = weapon.maxRange();
+        range = weapon.maxRange();
         if (range <= 0) range = 32; // fallback for melee
 
         int unitHP = unit->getHitPoints() + unit->getShields();
         bool isLethal = (damage > 0 && damage * 2 >= unitHP);
-        //bool cantFlee = range - unit->getType().groundWeapon().maxRange() > 64;
+        cantFlee = range - unit->getType().groundWeapon().maxRange() > safeRange;
 
         int dist = unit->getDistance(enemy);
-        const int RANGE_BUFFER = 64;
+        const int RANGE_BUFFER = safeRange;
         if (isLethal && dist <= range + RANGE_BUFFER) {
             if (dist < minLethalDist) {
                 minLethalDist = dist;
@@ -276,125 +287,11 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         }
     }
 
-    if (closestLethal) {
-        // Flee from the closest lethal enemy in range, but always slightly to the right or left
-        BWAPI::Position myPos = unit->getPosition();
-        BWAPI::Position lethalPos = closestLethal->getPosition();
-        int dx = myPos.x - lethalPos.x;
-        int dy = myPos.y - lethalPos.y;
-        double length = std::sqrt(dx * dx + dy * dy);
-
-        const int FLEE_DISTANCE = 32;
-        const int SIDE_STEP = 16; // Slightly to the side (half a tile)
-        int fleeX = myPos.x;
-        int fleeY = myPos.y;
-        if (length > 0.0) {
-            fleeX += static_cast<int>(FLEE_DISTANCE * dx / length);
-            fleeY += static_cast<int>(FLEE_DISTANCE * dy / length);
-
-            // Perpendicular vector (right: -dy, dx)
-            int perpDx = -dy;
-            int perpDy = dx;
-            double perpLength = std::sqrt(perpDx * perpDx + perpDy * perpDy);
-            if (perpLength > 0.0) {
-                // Alternate between right and left based on unit id for determinism
-                int side = (unit->getID() % 2 == 0) ? 1 : -1;
-                fleeX += static_cast<int>(side * SIDE_STEP * perpDx / perpLength);
-                fleeY += static_cast<int>(side * SIDE_STEP * perpDy / perpLength);
-            }
-        }
-        BWAPI::Position fleeVector(fleeX, fleeY);
-
-        // Validate if the tile is walkable, if not flee directly to the right or left
-        int tileX = fleeVector.x / 32;
-        int tileY = fleeVector.y / 32;
-        // Validate if the tile is walkable and not occupied by any unit
-        bool isOccupied = false;
-        for (const auto& u : BWAPI::Broodwar->getAllUnits()) {
-            if (!u || !u->exists()) continue;
-            // Use a small radius to check for overlap (8 pixels)
-            if (u->getPosition().getDistance(BWAPI::Position(fleeVector)) < 32) {
-                isOccupied = true;
-                break;
-            }
-        }
-        bool isWalkable = unit->getType().isFlyer() || (BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4) && !isOccupied);
-        if (!isWalkable) {
-            // If not walkable, try to flee strictly perpendicular (left/right or up/down)
-            // Determine if horizontal or vertical flee is more open
-            int absDx = std::abs(dx);
-            int absDy = std::abs(dy);
-            const int SIDE_ONLY_STEP = 32; // 1 tile
-
-            // Try horizontal (left/right)
-            int leftX = myPos.x - SIDE_ONLY_STEP;
-            int leftY = myPos.y;
-            int rightX = myPos.x + SIDE_ONLY_STEP;
-            int rightY = myPos.y;
-            bool leftWalkable = BWAPI::Broodwar->isWalkable((leftX / 32) * 4, (leftY / 32) * 4);
-            bool rightWalkable = BWAPI::Broodwar->isWalkable((rightX / 32) * 4, (rightY / 32) * 4);
-
-            // Try vertical (up/down)
-            int upX = myPos.x;
-            int upY = myPos.y - SIDE_ONLY_STEP;
-            int downX = myPos.x;
-            int downY = myPos.y + SIDE_ONLY_STEP;
-            bool upWalkable = BWAPI::Broodwar->isWalkable((upX / 32) * 4, (upY / 32) * 4);
-            bool downWalkable = BWAPI::Broodwar->isWalkable((downX / 32) * 4, (downY / 32) * 4);
-
-            // Prefer the direction perpendicular to the main flee vector
-            if (absDx > absDy) {
-                // Flee up or down
-                if (upWalkable) {
-                    fleeVector = BWAPI::Position(upX, upY);
-                } else if (downWalkable) {
-                    fleeVector = BWAPI::Position(downX, downY);
-                } else if (leftWalkable) {
-                    fleeVector = BWAPI::Position(leftX, leftY);
-                } else if (rightWalkable) {
-                    fleeVector = BWAPI::Position(rightX, rightY);
-                }
-                // else fallback to original fleeVector (will fail in SmartMove)
-            } else {
-                // Flee left or right
-                if (leftWalkable) {
-                    fleeVector = BWAPI::Position(leftX, leftY);
-                } else if (rightWalkable) {
-                    fleeVector = BWAPI::Position(rightX, rightY);
-                } else if (upWalkable) {
-                    fleeVector = BWAPI::Position(upX, upY);
-                } else if (downWalkable) {
-                    fleeVector = BWAPI::Position(downX, downY);
-                }
-                // else fallback to original fleeVector (will fail in SmartMove)
-            }
-            // Try to the right (perpendicular to flee direction)
-            int perpDx = -dy;
-            int perpDy = dx;
-            double perpLength = std::sqrt(perpDx * perpDx + perpDy * perpDy);
-            if (perpLength > 0.0) {
-                // Try right
-                int rightX = myPos.x + static_cast<int>(SIDE_ONLY_STEP * perpDx / perpLength);
-                int rightY = myPos.y + static_cast<int>(SIDE_ONLY_STEP * perpDy / perpLength);
-                int rightTileX = rightX / 32;
-                int rightTileY = rightY / 32;
-                if (BWAPI::Broodwar->isWalkable(rightTileX * 4, rightTileY * 4)) {
-                    fleeVector = BWAPI::Position(rightX, rightY);
-                } else {
-                    // Try left
-                    int leftX = myPos.x - static_cast<int>(SIDE_ONLY_STEP * perpDx / perpLength);
-                    int leftY = myPos.y - static_cast<int>(SIDE_ONLY_STEP * perpDy / perpLength);
-                    int leftTileX = leftX / 32;
-                    int leftTileY = leftY / 32;
-                    if (BWAPI::Broodwar->isWalkable(leftTileX * 4, leftTileY * 4)) {
-                        fleeVector = BWAPI::Position(leftX, leftY);
-                    }
-                    // If neither is walkable, fallback to original fleeVector (will fail in SmartMove)
-                }
-            }
-        }
-
-        SmartMove(unit, fleeVector);
+    if (closestLethal && !cantFlee) {
+        Flee(unit, closestLethal);
+        int x = unit->getPosition().x + 5;
+        int y = unit->getPosition().y + 5;
+        BWAPI::Broodwar->drawTextMap(BWAPI::Position(x, y), "Range %i", range);
         return;
     }
 
@@ -405,23 +302,30 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     bool bestTargetIsLethal = true; // Start with lethal as worst
 
     // For building targeting
-    BWAPI::Unit lowestPercentHPBuilding = nullptr;
+    BWAPI::Unit lowestPercentHP = nullptr;
     double lowestPercent = 1.1; // > 100%
+    int lowestPercentPriority = 3;
     int lowestAbsHP = std::numeric_limits<int>::max();
-    const int MAX_BUILDING_TARGET_DIST = 320; // Only skip full-HP buildings farther than this
 
     for (auto enemy : enemies)
     {
         if (!enemy || !enemy->exists()) continue;
+        int maxTargetDistance = 860; // Only skip full-HP buildings farther than this
 
         // Assign priority: 0 = offensive, 1 = worker, 2 = building, 3 = other
-        int priority = 3;
-        if (enemy->getType().canAttack() && !enemy->getType().isWorker() && !enemy->getType().isBuilding())
+        int priority = 4;
+        if (enemy->getType().canAttack() && !enemy->getType().isWorker() && !enemy->getType().isBuilding()) {
             priority = 0;
-        else if (enemy->getType().isWorker())
+            maxTargetDistance = 8;
+        }
+        else if (enemy->getType().isWorker()) {
+            maxTargetDistance = 16;
             priority = 1;
-        else if (enemy->getType().isBuilding())
+        }
+        else if (enemy->getType().isBuilding() && enemy->isCompleted())
             priority = 2;
+        else if (enemy->getType() == BWAPI::UnitTypes::Zerg_Larva || enemy->getType().isBuilding() && !enemy->isCompleted())
+            priority = 3;
 
         BWAPI::WeaponType weapon = enemy->getType().groundWeapon();
         if (unit->getType().isFlyer()) weapon = enemy->getType().airWeapon();
@@ -431,42 +335,56 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 
         int dist = unit->getDistance(enemy);
 
-        // Track lowest percent HP building, break ties with lowest absolute HP
-        if (priority == 2) {
-            int hp = enemy->getHitPoints();
-            int maxHp = enemy->getType().maxHitPoints();
-            if (maxHp > 0) {
-                double percent = static_cast<double>(hp) / maxHp;
-                // Skip if building is at 100% HP and too far away
-                if (percent >= 1.0 && dist > MAX_BUILDING_TARGET_DIST) continue;
-                if (percent < lowestPercent ||
-                    (percent == lowestPercent && hp < lowestAbsHP)) {
-                    lowestPercent = percent;
-                    lowestAbsHP = hp;
-                    lowestPercentHPBuilding = enemy;
-                }
-            }
-        }
-
         // Prefer non-lethal, then higher priority, then closer
         if ((!isLethal && bestTargetIsLethal) ||
             (isLethal == bestTargetIsLethal && priority < bestPriority) ||
             (isLethal == bestTargetIsLethal && priority == bestPriority && dist < minDist))
         {
             bestTarget = enemy;
-            bestPriority = priority;
             minDist = dist;
             bestTargetIsLethal = isLethal;
+            
+            if (priority <= bestPriority) {
+                int hp = enemy->getHitPoints() + enemy->getShields();
+                int maxHp = enemy->getType().maxHitPoints() + enemy->getType().maxShields();
+                if (maxHp > 0) {
+                    double percent = static_cast<double>(hp) / maxHp;
+                    // Skip if is at 100% HP and too far away
+                    if (percent >= 1.0 && dist > maxTargetDistance) {
+                        if (percent < lowestPercent ||
+                            (percent == lowestPercent && hp < lowestAbsHP) || priority > bestPriority) {
+                            lowestPercent = percent;
+                            lowestAbsHP = hp;
+                            lowestPercentHP = enemy;
+                            lowestPercentPriority = priority;
+                        }
+                    }
+                }
+            }
+            bestPriority = priority;
         }
     }
 
     // If the best target is a building, prefer the lowest percent HP building (break ties with lowest HP)
-    if (bestTarget && bestPriority == 2 && lowestPercentHPBuilding)
-        bestTarget = lowestPercentHPBuilding;
+    if (bestTarget && lowestPercentHP && lowestPercentPriority == bestPriority)
+        bestTarget = lowestPercentHP;
 
-    if (!bestTarget) return;
+    if (!bestTarget) {
+        // If the unit is stuck, attack the nearest enemy unit
+        if (unitsInstance.GetNearbyEnemyUnits(unit, 8).size() > 0 && unit->getGroundWeaponCooldown() == 0) {
+            BWAPI::Unit nearest = Units::GetNearestEnemyUnit(unit);
+            if (nearest) {
+                SmartAttackUnit(unit, nearest);
+                BWAPI::Broodwar->drawTextMap(unit->getPosition(), "Attack nearest");
+            }
+            return;
+        }
+        BWAPI::Broodwar->drawTextMap(unit->getPosition(), "No targets");
+        return;
+    }
 
     SmartAttackUnit(unit, bestTarget);
+    BWAPI::Broodwar->drawTextMap(unit->getPosition(), "Attack best target");
 }
 
 // Send our idle workers to mine minerals so they don't just stand there
@@ -689,10 +607,17 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
                 // If we have at least 2x as many allies as offensive enemies, attack the nearest offensive enemy
                 if (nearestOffensive && allyCount >= enemyCount * 2 && enemyCount > 0 && false) {
                     Micro::SmartAttackUnit(unit, nearestOffensive);
+                    return;
                 }
-                else {
-                    Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                if (nearestOffensive) {
+                    int range = nearestOffensive->getType().groundWeapon().maxRange();
+                    int dist = unit->getDistance(nearestOffensive);
+                    if (nearestOffensive && enemyCount > (allyCount * 2) + 1 && range + safeRange >= dist) {
+                        Micro::Flee(unit, nearestOffensive);
+                        return;
+                    }
                 }
+                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
             }
             else {
                 if (!BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
@@ -701,4 +626,141 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
             }
         }
     }
+}
+
+void Micro::Flee(BWAPI::Unit unit, BWAPI::Unit closestLethal) {
+
+    // Flee from the closest lethal enemy in range, but always slightly to the right or left
+    BWAPI::Position myPos = unit->getPosition();
+    BWAPI::Position lethalPos = closestLethal->getPosition();
+    int dx = myPos.x - lethalPos.x;
+    int dy = myPos.y - lethalPos.y;
+    double length = std::sqrt(dx * dx + dy * dy);
+
+    const int FLEE_DISTANCE = 32;
+    const int SIDE_STEP = 16; // Slightly to the side (half a tile)
+    int fleeX = myPos.x;
+    int fleeY = myPos.y;
+    if (length > 0.0) {
+        fleeX += static_cast<int>(FLEE_DISTANCE * dx / length);
+        fleeY += static_cast<int>(FLEE_DISTANCE * dy / length);
+
+        // Perpendicular vector (right: -dy, dx)
+        int perpDx = -dy;
+        int perpDy = dx;
+        double perpLength = std::sqrt(perpDx * perpDx + perpDy * perpDy);
+        if (perpLength > 0.0) {
+            // Alternate between right and left based on unit id for determinism
+            int side = (unit->getID() % 2 == 0) ? 1 : -1;
+            fleeX += static_cast<int>(side * SIDE_STEP * perpDx / perpLength);
+            fleeY += static_cast<int>(side * SIDE_STEP * perpDy / perpLength);
+        }
+    }
+    BWAPI::Position fleeVector(fleeX, fleeY);
+
+    // Validate if the tile is walkable, if not flee directly to the right or left
+    int tileX = fleeVector.x / 32;
+    int tileY = fleeVector.y / 32;
+    // Validate if the tile is walkable and not occupied by any unit
+   //bool isOccupied = false;
+   //for (const auto& u : BWAPI::Broodwar->getAllUnits()) {
+   //    if (!u || !u->exists()) continue;
+   //    // Use a small radius to check for overlap (8 pixels)
+   //    if (u->getPosition().getDistance(BWAPI::Position(fleeVector)) < 32) {
+   //        isOccupied = true;
+   //        break;
+   //    }
+   //}
+   //bool isWalkable = unit->getType().isFlyer() || BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4) || !isOccupied;
+    if (BWAPI::Broodwar->getUnitsOnTile(fleeVector.x, fleeVector.y).size() > 0) {
+        BWAPI::Broodwar->drawLineMap(unit->getPosition(), fleeVector, BWAPI::Colors::Purple);
+        // If not walkable, try to flee strictly perpendicular (left/right or up/down)
+        // Determine if horizontal or vertical flee is more open
+        int absDx = std::abs(dx);
+        int absDy = std::abs(dy);
+        const int SIDE_ONLY_STEP = 32; // 1 tile
+
+        // Try horizontal (left/right)
+        int leftX = myPos.x - SIDE_ONLY_STEP;
+        int leftY = myPos.y;
+        int rightX = myPos.x + SIDE_ONLY_STEP;
+        int rightY = myPos.y;
+        bool leftWalkable = BWAPI::Broodwar->isWalkable((leftX / 32) * 4, (leftY / 32) * 4);
+        bool rightWalkable = BWAPI::Broodwar->isWalkable((rightX / 32) * 4, (rightY / 32) * 4);
+
+        // Try vertical (up/down)
+        int upX = myPos.x;
+        int upY = myPos.y - SIDE_ONLY_STEP;
+        int downX = myPos.x;
+        int downY = myPos.y + SIDE_ONLY_STEP;
+        bool upWalkable = BWAPI::Broodwar->isWalkable((upX / 32) * 4, (upY / 32) * 4);
+        bool downWalkable = BWAPI::Broodwar->isWalkable((downX / 32) * 4, (downY / 32) * 4);
+
+        // Prefer the direction perpendicular to the main flee vector
+        if (absDx > absDy) {
+            // Flee up or down
+            if (upWalkable) {
+                fleeVector = BWAPI::Position(upX, upY);
+            }
+            else if (downWalkable) {
+                fleeVector = BWAPI::Position(downX, downY);
+            }
+            else if (leftWalkable) {
+                fleeVector = BWAPI::Position(leftX, leftY);
+            }
+            else if (rightWalkable) {
+                fleeVector = BWAPI::Position(rightX, rightY);
+            }
+            // else fallback to original fleeVector (will fail in SmartMove)
+        }
+        else {
+            // Flee left or right
+            if (leftWalkable) {
+                fleeVector = BWAPI::Position(leftX, leftY);
+            }
+            else if (rightWalkable) {
+                fleeVector = BWAPI::Position(rightX, rightY);
+            }
+            else if (upWalkable) {
+                fleeVector = BWAPI::Position(upX, upY);
+            }
+            else if (downWalkable) {
+                fleeVector = BWAPI::Position(downX, downY);
+            }
+            // else fallback to original fleeVector (will fail in SmartMove)
+        }
+        // Try to the right (perpendicular to flee direction)
+        int perpDx = -dy;
+        int perpDy = dx;
+        double perpLength = std::sqrt(perpDx * perpDx + perpDy * perpDy);
+        if (perpLength > 0.0) {
+            // Try right
+            int rightX = myPos.x + static_cast<int>(SIDE_ONLY_STEP * perpDx / perpLength);
+            int rightY = myPos.y + static_cast<int>(SIDE_ONLY_STEP * perpDy / perpLength);
+            int rightTileX = rightX / 32;
+            int rightTileY = rightY / 32;
+            if (BWAPI::Broodwar->isWalkable(rightTileX * 4, rightTileY * 4)) {
+                fleeVector = BWAPI::Position(rightX, rightY);
+            }
+            else {
+                // Try left
+                int leftX = myPos.x - static_cast<int>(SIDE_ONLY_STEP * perpDx / perpLength);
+                int leftY = myPos.y - static_cast<int>(SIDE_ONLY_STEP * perpDy / perpLength);
+                int leftTileX = leftX / 32;
+                int leftTileY = leftY / 32;
+                if (BWAPI::Broodwar->isWalkable(leftTileX * 4, leftTileY * 4)) {
+                    fleeVector = BWAPI::Position(leftX, leftY);
+                }
+                // If neither is walkable, fallback to original fleeVector (will fail in SmartMove)
+            }
+        }
+    }
+
+    BWAPI::Broodwar->drawLineMap(unit->getPosition(), lethalPos, BWAPI::Colors::Cyan);
+	auto range = closestLethal->getType().groundWeapon().maxRange();
+    BWAPI::Broodwar->drawBoxMap(BWAPI::Position(lethalPos.x - range, lethalPos.y - range), BWAPI::Position(lethalPos.x + range, lethalPos.y + range), BWAPI::Colors::Cyan);
+    BWAPI::Broodwar->drawBoxMap(BWAPI::Position(lethalPos.x - (range + safeRange), lethalPos.y - (range + safeRange)), BWAPI::Position(lethalPos.x + range + safeRange, lethalPos.y + range + safeRange), BWAPI::Colors::Teal);
+    SmartMove(unit, fleeVector);
+    BWAPI::Broodwar->drawTextMap(unit->getPosition(), "Fleeing");
+    return;
 }
