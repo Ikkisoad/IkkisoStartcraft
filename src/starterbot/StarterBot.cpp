@@ -18,13 +18,14 @@ int workersWanted = 9;
 int lingsWanted = 300;
 int unusedSupplyAccepted = 1;
 int expandTimer = 0;
+int mineralsFrame = 0;
 BWAPI::Unit scout;
 
 // Called when the bot starts!
 void StarterBot::onStart()
 {
     BasesTools::Initialize();
-
+    mineralsFrame = 0;
     // Select the build order type you want to use
     BuildOrderType selectedBuildOrder = BuildOrderType::FivePool;
     currentBuildOrder = BuildOrderFactory::Create(selectedBuildOrder);
@@ -51,6 +52,7 @@ void StarterBot::onStart()
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
+    BasesTools::DrawEnemyBases(BWAPI::Colors::Orange);
     //BasesTools::FindExpansionsV1();
 	//BasesTools::DrawExpansions();
     BasesTools::DrawAllBases(BWAPI::Colors::Yellow);
@@ -77,6 +79,11 @@ void StarterBot::onFrame()
     drawDebugInformation();
 
 	if (expandTimer > 0) expandTimer--;
+
+    if (BWAPI::Broodwar->self()->minerals() >= 200 && mineralsFrame == 0) {
+        mineralsFrame = BWAPI::Broodwar->getFrameCount();
+        Tools::print(std::to_string(mineralsFrame));
+    }
 }
 
 void StarterBot::buildOrder() {
@@ -141,26 +148,6 @@ BWAPI::Unit StarterBot::getAvailableUnit(BWAPI::UnitType unitType) {
         if (unit->getType() == unitType && unit->isIdle()) {
             // Get the closest mineral to this worker unit
             return unit;
-        }
-    }
-}
-
-// Send our idle workers to mine minerals so they don't just stand there
-void StarterBot::sendIdleWorkersToMinerals()
-{
-    // Let's send all of our starting workers to the closest mineral to them
-    // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
-    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-    for (auto& unit : myUnits)
-    {
-        // Check the unit type, if it is an idle worker, then we want to send it somewhere
-        if (unit->getType().isWorker() && unit->isIdle())
-        {
-            // Get the closest mineral to this worker unit
-            BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
-
-            // If a valid mineral was found, right click it with the unit in order to start harvesting
-            if (closestMineral) { unit->rightClick(closestMineral); }
         }
     }
 }

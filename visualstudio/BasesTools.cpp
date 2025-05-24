@@ -243,4 +243,10 @@ namespace BasesTools {
             BWAPI::Broodwar->drawCircleMap(pos, 10, color, true);
         }
     }
+
+    void BasesTools::DrawEnemyBases(BWAPI::Color color) {
+        for (const auto& pos : enemyBasePositions) {
+            BWAPI::Broodwar->drawCircleMap(pos, 10, color, true);
+        }
+    }
 }

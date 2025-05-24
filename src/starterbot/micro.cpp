@@ -46,7 +46,6 @@ void Micro::SmartKiteTarget(BWAPI::Unit rangedUnit, BWAPI::Unit target)
     }
 }
 
-//TODO avoid offensive unit and to attack other units if possible
 void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
     if (!meleeUnit) return;
 
@@ -112,8 +111,6 @@ void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
 void Micro::ScoutAndWander(BWAPI::Unit scout)
 {
     if (!scout) return;
-    //if (!scout->isIdle()) return;
-
     // Flee if being attacked
     if (scout->isUnderAttack()) {
         // Find the nearest enemy unit
@@ -149,6 +146,8 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
             return;
         }
     }
+    if (!scout->isIdle()) return;
+
 
     // First, try to scout the nearest unexplored starting location
     const auto& startLocations = BWAPI::Broodwar->getStartLocations();
@@ -215,8 +214,9 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 {
     if (!unit) return;
 
+    Units unitsInstance;
     // If the unit is stuck, attack the nearest enemy unit
-    if (unit->isStuck()) {
+    if (unit->isStuck() || unitsInstance.GetNearbyEnemyUnits(unit, 16).size() > 0 && unit->getGroundWeaponCooldown() == 0) {
         BWAPI::Unit nearest = Units::GetNearestEnemyUnit(unit);
         if (nearest) {
             SmartAttackUnit(unit, nearest);
@@ -224,7 +224,6 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         return;
     }
 
-    Units unitsInstance;
     auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
 
     // --- Lethal building prioritization: attack at all costs ---
@@ -265,6 +264,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
 
         int unitHP = unit->getHitPoints() + unit->getShields();
         bool isLethal = (damage > 0 && damage * 2 >= unitHP);
+        //bool cantFlee = range - unit->getType().groundWeapon().maxRange() > 64;
 
         int dist = unit->getDistance(enemy);
         const int RANGE_BUFFER = 64;
@@ -320,61 +320,58 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         }
         bool isWalkable = unit->getType().isFlyer() || (BWAPI::Broodwar->isWalkable(tileX * 4, tileY * 4) && !isOccupied);
         if (!isWalkable) {
-            if (!isWalkable) {
-                // If not walkable, try to flee strictly perpendicular (left/right or up/down)
-                // Determine if horizontal or vertical flee is more open
-                int absDx = std::abs(dx);
-                int absDy = std::abs(dy);
-                const int SIDE_ONLY_STEP = 32; // 1 tile
+            // If not walkable, try to flee strictly perpendicular (left/right or up/down)
+            // Determine if horizontal or vertical flee is more open
+            int absDx = std::abs(dx);
+            int absDy = std::abs(dy);
+            const int SIDE_ONLY_STEP = 32; // 1 tile
 
-                // Try horizontal (left/right)
-                int leftX = myPos.x - SIDE_ONLY_STEP;
-                int leftY = myPos.y;
-                int rightX = myPos.x + SIDE_ONLY_STEP;
-                int rightY = myPos.y;
-                bool leftWalkable = BWAPI::Broodwar->isWalkable((leftX / 32) * 4, (leftY / 32) * 4);
-                bool rightWalkable = BWAPI::Broodwar->isWalkable((rightX / 32) * 4, (rightY / 32) * 4);
+            // Try horizontal (left/right)
+            int leftX = myPos.x - SIDE_ONLY_STEP;
+            int leftY = myPos.y;
+            int rightX = myPos.x + SIDE_ONLY_STEP;
+            int rightY = myPos.y;
+            bool leftWalkable = BWAPI::Broodwar->isWalkable((leftX / 32) * 4, (leftY / 32) * 4);
+            bool rightWalkable = BWAPI::Broodwar->isWalkable((rightX / 32) * 4, (rightY / 32) * 4);
 
-                // Try vertical (up/down)
-                int upX = myPos.x;
-                int upY = myPos.y - SIDE_ONLY_STEP;
-                int downX = myPos.x;
-                int downY = myPos.y + SIDE_ONLY_STEP;
-                bool upWalkable = BWAPI::Broodwar->isWalkable((upX / 32) * 4, (upY / 32) * 4);
-                bool downWalkable = BWAPI::Broodwar->isWalkable((downX / 32) * 4, (downY / 32) * 4);
+            // Try vertical (up/down)
+            int upX = myPos.x;
+            int upY = myPos.y - SIDE_ONLY_STEP;
+            int downX = myPos.x;
+            int downY = myPos.y + SIDE_ONLY_STEP;
+            bool upWalkable = BWAPI::Broodwar->isWalkable((upX / 32) * 4, (upY / 32) * 4);
+            bool downWalkable = BWAPI::Broodwar->isWalkable((downX / 32) * 4, (downY / 32) * 4);
 
-                // Prefer the direction perpendicular to the main flee vector
-                if (absDx > absDy) {
-                    // Flee up or down
-                    if (upWalkable) {
-                        fleeVector = BWAPI::Position(upX, upY);
-                    } else if (downWalkable) {
-                        fleeVector = BWAPI::Position(downX, downY);
-                    } else if (leftWalkable) {
-                        fleeVector = BWAPI::Position(leftX, leftY);
-                    } else if (rightWalkable) {
-                        fleeVector = BWAPI::Position(rightX, rightY);
-                    }
-                    // else fallback to original fleeVector (will fail in SmartMove)
-                } else {
-                    // Flee left or right
-                    if (leftWalkable) {
-                        fleeVector = BWAPI::Position(leftX, leftY);
-                    } else if (rightWalkable) {
-                        fleeVector = BWAPI::Position(rightX, rightY);
-                    } else if (upWalkable) {
-                        fleeVector = BWAPI::Position(upX, upY);
-                    } else if (downWalkable) {
-                        fleeVector = BWAPI::Position(downX, downY);
-                    }
-                    // else fallback to original fleeVector (will fail in SmartMove)
+            // Prefer the direction perpendicular to the main flee vector
+            if (absDx > absDy) {
+                // Flee up or down
+                if (upWalkable) {
+                    fleeVector = BWAPI::Position(upX, upY);
+                } else if (downWalkable) {
+                    fleeVector = BWAPI::Position(downX, downY);
+                } else if (leftWalkable) {
+                    fleeVector = BWAPI::Position(leftX, leftY);
+                } else if (rightWalkable) {
+                    fleeVector = BWAPI::Position(rightX, rightY);
                 }
+                // else fallback to original fleeVector (will fail in SmartMove)
+            } else {
+                // Flee left or right
+                if (leftWalkable) {
+                    fleeVector = BWAPI::Position(leftX, leftY);
+                } else if (rightWalkable) {
+                    fleeVector = BWAPI::Position(rightX, rightY);
+                } else if (upWalkable) {
+                    fleeVector = BWAPI::Position(upX, upY);
+                } else if (downWalkable) {
+                    fleeVector = BWAPI::Position(downX, downY);
+                }
+                // else fallback to original fleeVector (will fail in SmartMove)
             }
             // Try to the right (perpendicular to flee direction)
             int perpDx = -dy;
             int perpDy = dx;
             double perpLength = std::sqrt(perpDx * perpDx + perpDy * perpDy);
-            const int SIDE_ONLY_STEP = 32; // 1 tile to the side
             if (perpLength > 0.0) {
                 // Try right
                 int rightX = myPos.x + static_cast<int>(SIDE_ONLY_STEP * perpDx / perpLength);
@@ -470,6 +467,26 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     if (!bestTarget) return;
 
     SmartAttackUnit(unit, bestTarget);
+}
+
+// Send our idle workers to mine minerals so they don't just stand there
+void Micro::sendIdleWorkersToMinerals()
+{
+    // Let's send all of our starting workers to the closest mineral to them
+    // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+    for (auto& unit : myUnits)
+    {
+        // Check the unit type, if it is an idle worker, then we want to send it somewhere
+        if (unit->getType().isWorker() && unit->isIdle())
+        {
+            // Get the closest mineral to this worker unit
+            BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
+
+            // If a valid mineral was found, right click it with the unit in order to start harvesting
+            if (closestMineral) { unit->rightClick(closestMineral); }
+        }
+    }
 }
 
 void Micro::SmartGatherMinerals(BWAPI::Unit drone)
@@ -575,6 +592,34 @@ void Micro::SmartGatherMinerals(BWAPI::Unit drone)
     }
 }
 
+void Micro::unitAttack(BWAPI::Unit unit) {
+    const BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
+
+    if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
+        // If there are enemies nearby, use micro logic
+        Units unitsInstance;
+        auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
+        if (!enemies.empty()) {
+            Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+            return;
+        }
+
+        if (enemyBase == BWAPI::Positions::None) {
+            Micro::ScoutAndWander(unit);
+        }
+        else {
+            if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { return; }
+            if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
+                //Units::AttackNearestNonLethalEnemyUnit(unit);
+                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+            }
+            else {
+                unit->attack(enemyBase);
+            }
+        }
+    }
+}
+
 void Micro::attack() {
     const BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
@@ -598,6 +643,60 @@ void Micro::attack() {
                     Micro::SmartAvoidLethalAndAttackNonLethal(unit);
                 } else {
                     unit->attack(enemyBase);
+                }
+            }
+        }
+    }
+}
+
+void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
+    for (auto& unit : myUnits) {
+        if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
+            Micro::ScoutAndWander(unit);
+            continue;
+        }
+        if (unit->getType().isWorker()) {
+            //Micro::SmartGatherMinerals(unit);
+            continue;
+        }
+        if (!unit->getType().isBuilding()) {
+            // Only micro if the unit is not busy with something else
+            if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
+
+            // Use spatial queries for efficiency
+            auto enemies = unit->getUnitsInRadius(640, BWAPI::Filter::IsEnemy && BWAPI::Filter::Exists);
+            if (!enemies.empty()) {
+                // Check for nearest offensive enemy unit
+                BWAPI::Unit nearestOffensive = nullptr;
+                int minDist = 645;
+                int enemyCount = 0;
+                for (auto enemy : enemies) {
+                    if (!enemy || !enemy->exists()) continue;
+                    // Offensive: can attack, not worker, not building
+                    if (enemy->getType().canAttack() && !enemy->getType().isWorker() && !enemy->getType().isBuilding()) {
+                        int dist = unit->getDistance(enemy);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            nearestOffensive = enemy;
+                        }
+                        enemyCount++;
+                    }
+                }
+                // Count nearby allies (excluding buildings and workers)
+                int allyCount = 0;
+                auto alliesNearby = unit->getUnitsInRadius(96, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
+                allyCount = static_cast<int>(alliesNearby.size());
+                // If we have at least 2x as many allies as offensive enemies, attack the nearest offensive enemy
+                if (nearestOffensive && allyCount >= enemyCount * 2 && enemyCount > 0 && false) {
+                    Micro::SmartAttackUnit(unit, nearestOffensive);
+                }
+                else {
+                    Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                }
+            }
+            else {
+                if (!BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
+                    Micro::unitAttack(unit);
                 }
             }
         }

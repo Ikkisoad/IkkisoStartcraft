@@ -10,6 +10,9 @@ namespace Micro
     void SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit);
     void ScoutAndWander(BWAPI::Unit scout);
     void SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit);
+    void sendIdleWorkersToMinerals();
     void SmartGatherMinerals(BWAPI::Unit drone);
+    void unitAttack(BWAPI::Unit unit);
     void attack();
+    void BasicAttackAndScoutLoop(BWAPI::Unitset myUnits);
 }
