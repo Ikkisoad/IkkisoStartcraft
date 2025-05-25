@@ -1,29 +1,29 @@
-#include "7Pool.h"
-#include "Tools.h"
-#include "../../visualstudio/BasesTools.h"
-#include "micro.h"
+#include "6Pool.h"
+#include "../Tools.h"
+#include "../../../visualstudio/BasesTools.h"
+#include "../micro.h"
 
-SevenPool& SevenPool::Instance() {
-    static SevenPool instance;
+SixPool& SixPool::Instance() {
+    static SixPool instance;
     return instance;
 }
 
-void SevenPool::onStart() {
-    builtSevenDrones = false;
+void SixPool::onStart() {
+    builtSixDrones = false;
 }
 
-void SevenPool::Execute() {
+void SixPool::Execute() {
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
 
     // Build up to 6 drones before pool
-    if (!builtSevenDrones) {
+    if (!builtSixDrones) {
         int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits, true);
-        if (droneCount < 7 && BWAPI::Broodwar->self()->minerals() >= 50) {
+        if (droneCount < 6 && BWAPI::Broodwar->self()->minerals() >= 50) {
             Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Drone);
             return;
         }
-        if (droneCount >= 7) {
-            builtSevenDrones = true;
+        if (droneCount >= 6) {
+            builtSixDrones = true;
         }
     }
 
@@ -34,11 +34,7 @@ void SevenPool::Execute() {
 
     // Train zerglings when pool is done
     if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)) {
-        Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Zergling);
-
-        if (BWAPI::Broodwar->self()->minerals() >= 350) {
-            Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
-        }
+        Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
     }
 
     for (auto& unit : myUnits) {
@@ -65,10 +61,10 @@ void SevenPool::Execute() {
     }
 }
 
-void SevenPool::OnUnitCreate(BWAPI::Unit unit) {
+void SixPool::OnUnitCreate(BWAPI::Unit unit) {
     // Optional: extractor trick or other logic
 }
 
-void SevenPool::onUnitComplete(BWAPI::Unit unit) {
+void SixPool::onUnitComplete(BWAPI::Unit unit) {
     // Optional: logic for completed units
 }

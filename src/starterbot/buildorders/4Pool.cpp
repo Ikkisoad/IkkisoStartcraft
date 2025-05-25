@@ -1,9 +1,9 @@
 #include "4Pool.h"
-#include "Tools.h"
-#include "../../visualstudio/BasesTools.h"
-#include "../../BWEM/bwem.h"  
+#include "../Tools.h"
+#include "../../../visualstudio/BasesTools.h"
+#include "../../../BWEM/bwem.h"  
 #include "../../starterbot/Units.cpp"
-#include "micro.h"
+#include "../micro.h"
 
 // Singleton instance
 FourPool& FourPool::Instance() {

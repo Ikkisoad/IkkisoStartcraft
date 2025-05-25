@@ -19,11 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\starterbot\4Pool.h" />
-    <ClInclude Include="..\src\starterbot\5Pool.h" />
-    <ClInclude Include="..\src\starterbot\6Pool.h" />
-    <ClInclude Include="..\src\starterbot\7Pool.h" />
-    <ClInclude Include="..\src\starterbot\8Pool.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\4Pool.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\5Pool.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\6Pool.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\7Pool.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\8Pool.h" />
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
     <ClInclude Include="..\src\starterbot\MapTools.h" />
     <ClInclude Include="..\src\starterbot\micro.h" />
@@ -49,11 +49,11 @@
     <ClCompile Include="..\BWEM\src\neutral.cpp" />
     <ClCompile Include="..\BWEM\src\tiles.cpp" />
     <ClCompile Include="..\BWEM\src\utils.cpp" />
-    <ClCompile Include="..\src\starterbot\4Pool.cpp" />
-    <ClCompile Include="..\src\starterbot\5Pool.cpp" />
-    <ClCompile Include="..\src\starterbot\6Pool.cpp" />
-    <ClCompile Include="..\src\starterbot\7Pool.cpp" />
-    <ClCompile Include="..\src\starterbot\8Pool.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\4Pool.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\5Pool.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\6Pool.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\7Pool.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\8Pool.cpp" />
     <ClCompile Include="..\src\starterbot\main.cpp" />
     <ClCompile Include="..\src\starterbot\MapTools.cpp" />
     <ClCompile Include="..\src\starterbot\micro.cpp" />

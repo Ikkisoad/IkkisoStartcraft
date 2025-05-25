@@ -1,29 +1,29 @@
-#include "6Pool.h"
-#include "Tools.h"
-#include "../../visualstudio/BasesTools.h"
-#include "micro.h"
+#include "8Pool.h"
+#include "../Tools.h"
+#include "../../../visualstudio/BasesTools.h"
+#include "../micro.h"
 
-SixPool& SixPool::Instance() {
-    static SixPool instance;
+EightPool& EightPool::Instance() {
+    static EightPool instance;
     return instance;
 }
 
-void SixPool::onStart() {
-    builtSixDrones = false;
+void EightPool::onStart() {
+    builtEightDrones = false;
 }
 
-void SixPool::Execute() {
+void EightPool::Execute() {
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
 
-    // Build up to 6 drones before pool
-    if (!builtSixDrones) {
+    // Build up to 8 drones before pool
+    if (!builtEightDrones) {
         int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits, true);
-        if (droneCount < 6 && BWAPI::Broodwar->self()->minerals() >= 50) {
+        if (droneCount < 8 && BWAPI::Broodwar->self()->minerals() >= 50) {
             Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Drone);
             return;
         }
-        if (droneCount >= 6) {
-            builtSixDrones = true;
+        if (droneCount >= 8) {
+            builtEightDrones = true;
         }
     }
 
@@ -34,7 +34,11 @@ void SixPool::Execute() {
 
     // Train zerglings when pool is done
     if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)) {
-        Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Zergling);
+        Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Zergling);
+
+        if (BWAPI::Broodwar->self()->minerals() >= 350) {
+            Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
+        }
     }
 
     for (auto& unit : myUnits) {
@@ -61,10 +65,10 @@ void SixPool::Execute() {
     }
 }
 
-void SixPool::OnUnitCreate(BWAPI::Unit unit) {
+void EightPool::OnUnitCreate(BWAPI::Unit unit) {
     // Optional: extractor trick or other logic
 }
 
-void SixPool::onUnitComplete(BWAPI::Unit unit) {
+void EightPool::onUnitComplete(BWAPI::Unit unit) {
     // Optional: logic for completed units
 }

@@ -1,11 +1,11 @@
 // BuildOrderFactory.h
 #pragma once
 #include "../../../visualstudio/src/starterbot/BuildOrder.h" // Adjusted the include path to match the relative location
-#include "4Pool.h"
-#include "5Pool.h"
-#include "6Pool.h"
-#include "7Pool.h"
-#include "8Pool.h"
+#include "../buildorders/4Pool.h"
+#include "../buildorders/5Pool.h"
+#include "../buildorders/6Pool.h"
+#include "../buildorders/7Pool.h"
+#include "../buildorders/8Pool.h"
 
 enum class BuildOrderType { FourPool, FivePool, SixPool, SevenPool, EightPool };
 

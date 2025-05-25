@@ -1,7 +1,7 @@
 #include "5Pool.h"
-#include "Tools.h"
-#include "../../visualstudio/BasesTools.h"
-#include "micro.h"
+#include "../Tools.h"
+#include "../../../visualstudio/BasesTools.h"
+#include "../micro.h"
 
 FivePool& FivePool::Instance() {
     static FivePool instance;

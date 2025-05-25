@@ -1,29 +1,29 @@
-#include "8Pool.h"
-#include "Tools.h"
-#include "../../visualstudio/BasesTools.h"
-#include "micro.h"
+#include "7Pool.h"
+#include "../Tools.h"
+#include "../../../visualstudio/BasesTools.h"
+#include "../micro.h"
 
-EightPool& EightPool::Instance() {
-    static EightPool instance;
+SevenPool& SevenPool::Instance() {
+    static SevenPool instance;
     return instance;
 }
 
-void EightPool::onStart() {
-    builtEightDrones = false;
+void SevenPool::onStart() {
+    builtSevenDrones = false;
 }
 
-void EightPool::Execute() {
+void SevenPool::Execute() {
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
 
-    // Build up to 8 drones before pool
-    if (!builtEightDrones) {
+    // Build up to 6 drones before pool
+    if (!builtSevenDrones) {
         int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits, true);
-        if (droneCount < 8 && BWAPI::Broodwar->self()->minerals() >= 50) {
+        if (droneCount < 7 && BWAPI::Broodwar->self()->minerals() >= 50) {
             Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Drone);
             return;
         }
-        if (droneCount >= 8) {
-            builtEightDrones = true;
+        if (droneCount >= 7) {
+            builtSevenDrones = true;
         }
     }
 
@@ -65,10 +65,10 @@ void EightPool::Execute() {
     }
 }
 
-void EightPool::OnUnitCreate(BWAPI::Unit unit) {
+void SevenPool::OnUnitCreate(BWAPI::Unit unit) {
     // Optional: extractor trick or other logic
 }
 
-void EightPool::onUnitComplete(BWAPI::Unit unit) {
+void SevenPool::onUnitComplete(BWAPI::Unit unit) {
     // Optional: logic for completed units
 }
