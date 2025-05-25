@@ -15,5 +15,6 @@ namespace Micro
     void unitAttack(BWAPI::Unit unit);
     void attack();
     void BasicAttackAndScoutLoop(BWAPI::Unitset myUnits);
+    void Retreat(BWAPI::Unit unit);
     void Flee(BWAPI::Unit unit, BWAPI::Unit closestLethal);
 }

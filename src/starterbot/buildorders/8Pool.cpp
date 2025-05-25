@@ -60,7 +60,6 @@ void EightPool::Execute() {
             Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
         }
     }
-
     Micro::BasicAttackAndScoutLoop(myUnits);
 }
 

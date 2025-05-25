@@ -10,6 +10,7 @@ namespace Tools
     int CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units, const bool inProgress);
 
     BWAPI::Unit GetUnitOfType(BWAPI::UnitType type);
+    int CountUnitOfType(BWAPI::UnitType type);
     void Scout(BWAPI::Unit scout);
     void GatherGas(BWAPI::Unit extractor);
     BWAPI::Unit GetDepot();

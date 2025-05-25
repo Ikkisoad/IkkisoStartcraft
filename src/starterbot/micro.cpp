@@ -289,7 +289,12 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     }
 
     if (closestLethal && !cantFlee) {
+       /* if (!BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
+			Retreat(unit);
+        }
+        else {*/
         Flee(unit, closestLethal);
+        //}
         int x = unit->getPosition().x + 5;
         int y = unit->getPosition().y + 5;
         BWAPI::Broodwar->drawTextMap(BWAPI::Position(x, y), "Range %i", range);
@@ -567,6 +572,11 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
             Micro::sendIdleWorkersToMinerals();
             continue;
         }
+
+        /*if (Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Zergling) < 4) {
+            Micro::ScoutAndWander(unit);
+            return;
+        }*/
         if (!unit->getType().isBuilding()) {
             // Only micro if the unit is not busy with something else
             if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
@@ -608,6 +618,10 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
                         return;
                     }
                 }
+                /*else if (unit->getHitPoints() < unit->getInitialHitPoints() / 4) {
+                    Micro::Retreat(unit);
+                    return;
+                }*/
                 Micro::SmartAvoidLethalAndAttackNonLethal(unit);
             }
             else {
@@ -617,6 +631,12 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
             }
         }
     }
+}
+
+void Micro::Retreat(BWAPI::Unit unit) {
+    // Only micro if the unit is not busy with something else
+    if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) return;
+    SmartMove(unit, BWAPI::Position(BasesTools::GetMainBasePosition()));
 }
 
 void Micro::Flee(BWAPI::Unit unit, BWAPI::Unit closestLethal) {

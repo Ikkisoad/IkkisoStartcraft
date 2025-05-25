@@ -55,6 +55,23 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
     return nullptr;
 }
 
+int Tools::CountUnitOfType(BWAPI::UnitType type)
+{
+	int count = 0;
+    // For each unit that we own
+    for (auto& unit : BWAPI::Broodwar->self()->getUnits())
+    {
+        // if the unit is of the correct type, and it actually has been constructed, return it
+        if (unit->getType() == type && unit->isCompleted())
+        {
+			count++;
+        }
+    }
+
+    // If we didn't find a valid unit to return, make sure we return nullptr
+    return count;
+}
+
 void Tools::Scout(BWAPI::Unit scout) {
     if (!scout) return;
     for (auto tile : BWAPI::Broodwar->getStartLocations()) {
