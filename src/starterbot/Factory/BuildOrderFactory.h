@@ -13,6 +13,8 @@ class BuildOrderFactory {
 public:
     static BuildOrder* Create(BuildOrderType type) {
         switch (type) {
+            // Pool possibilities:
+            // Extractor trick at 9/9 for extractor/drone/zergling
             case BuildOrderType::FourPool: return &FourPool::Instance();
             case BuildOrderType::FivePool: return &FivePool::Instance();
             case BuildOrderType::SixPool: return &SixPool::Instance();

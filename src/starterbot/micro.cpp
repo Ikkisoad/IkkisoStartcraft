@@ -310,7 +310,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
     for (auto enemy : enemies)
     {
         if (!enemy || !enemy->exists()) continue;
-        int maxTargetDistance = 860; // Only skip full-HP buildings farther than this
+        int maxTargetDistance = 32 * 50; // Only skip full-HP buildings farther than this
 
         // Assign priority: 0 = offensive, 1 = worker, 2 = building, 3 = other
         int priority = 4;
@@ -512,28 +512,17 @@ void Micro::SmartGatherMinerals(BWAPI::Unit drone)
 
 void Micro::unitAttack(BWAPI::Unit unit) {
     const BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
-
-    if (!unit->getType().isWorker() && unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) {
-        // If there are enemies nearby, use micro logic
-        Units unitsInstance;
-        auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
-        if (!enemies.empty()) {
+    if (enemyBase == BWAPI::Positions::None) {
+        Micro::ScoutAndWander(unit);
+    }
+    else {
+        if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { return; }
+        if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
+            //Units::AttackNearestNonLethalEnemyUnit(unit);
             Micro::SmartAvoidLethalAndAttackNonLethal(unit);
-            return;
-        }
-
-        if (enemyBase == BWAPI::Positions::None) {
-            Micro::ScoutAndWander(unit);
         }
         else {
-            if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { return; }
-            if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
-                //Units::AttackNearestNonLethalEnemyUnit(unit);
-                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
-            }
-            else {
-                unit->attack(enemyBase);
-            }
+            unit->attack(enemyBase);
         }
     }
 }
@@ -601,15 +590,16 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
                     }
                 }
                 // Count nearby allies (excluding buildings and workers)
-                int allyCount = 0;
-                auto alliesNearby = unit->getUnitsInRadius(96, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
-                allyCount = static_cast<int>(alliesNearby.size());
-                // If we have at least 2x as many allies as offensive enemies, attack the nearest offensive enemy
-                if (nearestOffensive && allyCount >= enemyCount * 2 && enemyCount > 0 && false) {
-                    Micro::SmartAttackUnit(unit, nearestOffensive);
-                    return;
-                }
                 if (nearestOffensive) {
+                    int allyCount = 0;
+                    auto alliesNearby = unit->getUnitsInRadius(96, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
+                    auto alliesNearbyEnemy = nearestOffensive->getUnitsInRadius(96, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
+                    allyCount = static_cast<int>(alliesNearby.size()) + static_cast<int>(alliesNearbyEnemy.size());
+                    // If we have at least 2x as many allies as offensive enemies, attack the nearest offensive enemy
+                    if (allyCount >= enemyCount * 2 && enemyCount > 0 && false) {
+                        Micro::SmartAttackUnit(unit, nearestOffensive);
+                        return;
+                    }
                     int range = nearestOffensive->getType().groundWeapon().maxRange();
                     int dist = unit->getDistance(nearestOffensive);
                     if (nearestOffensive && enemyCount > (allyCount * 2) + 1 && range + safeRange >= dist) {
