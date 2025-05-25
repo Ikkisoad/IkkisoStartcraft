@@ -2,6 +2,7 @@
 #include "../Tools.h"
 #include "../../../visualstudio/BasesTools.h"
 #include "../micro.h"
+#include "BuildOrderTools.h"
 
 SevenPool& SevenPool::Instance() {
     static SevenPool instance;
@@ -27,42 +28,7 @@ void SevenPool::Execute() {
         }
     }
 
-    // Build spawning pool as soon as possible
-    if (BWAPI::Broodwar->self()->minerals() >= 200) {
-        Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
-    }
-
-    // Train zerglings when pool is done
-    if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)) {
-        Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Zergling);
-
-        if (BWAPI::Broodwar->self()->minerals() >= 350) {
-            Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
-        }
-    }
-
-    for (auto& unit : myUnits) {
-        if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
-            Micro::ScoutAndWander(unit);
-            continue;
-        }
-        if (unit->getType().isWorker()) {
-            Micro::SmartGatherMinerals(unit);
-            continue;
-        }
-        if (!unit->getType().isBuilding()) {
-            if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
-
-            auto enemies = unit->getUnitsInRadius(640, BWAPI::Filter::IsEnemy && BWAPI::Filter::Exists);
-            if (!enemies.empty()) {
-                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
-            } else {
-                if (!BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
-                    Micro::attack();
-                }
-            }
-        }
-    }
+    BuildOrderTools::PoolAllIn(myUnits);
 }
 
 void SevenPool::OnUnitCreate(BWAPI::Unit unit) {

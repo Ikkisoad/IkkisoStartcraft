@@ -13,4 +13,6 @@ public:
 private:
     EightPool() = default;
     bool builtEightDrones = false;
+	bool builtExtractor = false;
+    bool builtSpawningPool = false;
 };

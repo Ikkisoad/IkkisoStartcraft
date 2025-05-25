@@ -148,7 +148,7 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
             return;
         }
     }
-    if (!scout->isIdle()) return;
+    if (!scout->isIdle() && !BWAPI::Broodwar->isExplored(BWAPI::TilePosition(scout->getOrderTargetPosition()))) return;
 
 
     // First, try to scout the nearest unexplored starting location
@@ -163,15 +163,16 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
             const int dist = scout->getDistance(BWAPI::Position(startLoc));
             if (dist < minDist)
             {
-                minDist = dist;
-                nearestUnexplored = startLoc;
-
+                auto alreadyBeingScouted = false;
                 for (auto unit : BWAPI::Broodwar->getAllUnits()) {
                     if (unit->getPlayer() == BWAPI::Broodwar->self() && unit->getLastCommand().getType() == BWAPI::UnitCommandTypes::Move && unit->getOrderTargetPosition() == BWAPI::Position(startLoc)) {
-                        continue;
+                        alreadyBeingScouted = true;
+                        break;
                     }
                 }
-
+				if (alreadyBeingScouted) continue; // Skip if already being scouted
+                minDist = dist;
+                nearestUnexplored = startLoc;
                 foundUnexplored = true;
             }
         }
@@ -563,7 +564,7 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
             continue;
         }
         if (unit->getType().isWorker()) {
-            //Micro::SmartGatherMinerals(unit);
+            Micro::sendIdleWorkersToMinerals();
             continue;
         }
         if (!unit->getType().isBuilding()) {

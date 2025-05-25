@@ -18,9 +18,6 @@ void FivePool::onStart() {
 
 void FivePool::Execute() {
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-
-    // Send our idle workers to mine minerals so they don't just stand there
-    Micro::sendIdleWorkersToMinerals();
     // Build one extra drone at the start (5 pool)
     if (!builtExtraDrone) {
         int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits, true);

@@ -2,6 +2,7 @@
 #include "../Tools.h"
 #include "../../../visualstudio/BasesTools.h"
 #include "../micro.h"
+#include "BuildOrderTools.h"
 
 EightPool& EightPool::Instance() {
     static EightPool instance;
@@ -10,6 +11,8 @@ EightPool& EightPool::Instance() {
 
 void EightPool::onStart() {
     builtEightDrones = false;
+    builtExtractor = false;
+    builtSpawningPool = false;
 }
 
 void EightPool::Execute() {
@@ -17,7 +20,7 @@ void EightPool::Execute() {
 
     // Build up to 8 drones before pool
     if (!builtEightDrones) {
-        int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits, true);
+        const int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits, true);
         if (droneCount < 8 && BWAPI::Broodwar->self()->minerals() >= 50) {
             Tools::TrainUnit(BWAPI::UnitTypes::Zerg_Drone);
             return;
@@ -26,49 +29,56 @@ void EightPool::Execute() {
             builtEightDrones = true;
         }
     }
+    else {
 
-    // Build spawning pool as soon as possible
-    if (BWAPI::Broodwar->self()->minerals() >= 200) {
-        Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
+        if (BWAPI::Broodwar->self()->gas() >= 100) {
+            for (auto unit : myUnits) {
+                if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
+                    unit->upgrade(BWAPI::UpgradeTypes::Metabolic_Boost);
+                }
+                else if (unit->getType().isWorker() && unit->isGatheringGas()) {
+					unit->gather(unit->getClosestUnit(BWAPI::Filter::IsMineralField));
+                }
+			}
+		}
+
+    }
+    if (BWAPI::Broodwar->self()->minerals() >= 190) {
+        builtSpawningPool = Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
+    }
+
+    if (builtSpawningPool) {
+        Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Extractor, 1, BWAPI::Broodwar->self()->getStartLocation());
+        if (BWAPI::Broodwar->self()->supplyTotal() == BWAPI::Broodwar->self()->supplyUsed()) Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Overlord);
     }
 
     // Train zerglings when pool is done
     if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)) {
         Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Zergling);
 
-        if (BWAPI::Broodwar->self()->minerals() >= 350) {
+        if (builtExtractor && BWAPI::Broodwar->self()->minerals() >= 350) {
             Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
         }
     }
 
-    for (auto& unit : myUnits) {
-        if (unit->getType() == BWAPI::UnitTypes::Zerg_Overlord) {
-            Micro::ScoutAndWander(unit);
-            continue;
-        }
-        if (unit->getType().isWorker()) {
-            Micro::SmartGatherMinerals(unit);
-            continue;
-        }
-        if (!unit->getType().isBuilding()) {
-            if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
-
-            auto enemies = unit->getUnitsInRadius(640, BWAPI::Filter::IsEnemy && BWAPI::Filter::Exists);
-            if (!enemies.empty()) {
-                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
-            } else {
-                if (!BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
-                    Micro::attack();
-                }
-            }
-        }
-    }
+    Micro::BasicAttackAndScoutLoop(myUnits);
 }
 
 void EightPool::OnUnitCreate(BWAPI::Unit unit) {
-    // Optional: extractor trick or other logic
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
+        Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Extractor, 1, BWAPI::Broodwar->self()->getStartLocation());
+	}
 }
 
 void EightPool::onUnitComplete(BWAPI::Unit unit) {
-    // Optional: logic for completed units
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Extractor) {
+        builtExtractor = true;
+        int count = 0;
+        for (auto drone : BWAPI::Broodwar->self()->getUnits()) {
+            if (drone->getType() == BWAPI::UnitTypes::Zerg_Drone && count < 3) {
+                drone->gather(unit);
+                count++;
+            }
+        }
+    }
 }
