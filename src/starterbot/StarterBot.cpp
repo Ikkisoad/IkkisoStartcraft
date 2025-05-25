@@ -6,6 +6,7 @@
 #include "../../visualstudio/src/starterbot/BuildOrder.h"
 #include "Factory/BuildOrderFactory.h"
 #include "micro.h"
+#include "stats/stats.h"
 
 StarterBot::StarterBot()
 {
@@ -24,6 +25,7 @@ BWAPI::Unit scout;
 // Called when the bot starts!
 void StarterBot::onStart()
 {
+    Stats::GetStatsLine();
     BasesTools::Initialize();
     mineralsFrame = 0;
     // Select the build order type you want to use
@@ -212,21 +214,12 @@ void StarterBot::onEnd(bool isWinner)
 {
     std::string oponentName = "";
     for (auto player : BWAPI::Broodwar->getPlayers()) {
-        if (player != BWAPI::Broodwar->self()) {
+        if (player != BWAPI::Broodwar->self() && player != BWAPI::Broodwar->neutral()) {
             oponentName = player->getName();
         }
     }
-    LogGameStats(oponentName, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
+    Stats::LogGameStats(oponentName, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
     std::cout << "We " << (isWinner ? "won!" : "lost!") << "\n";
-}
-
-//TODO This doesn't work
-void StarterBot::LogGameStats(const std::string& opponent, const std::string& map, const std::string& strategy, bool win) {
-    std::ofstream file("stats/game_stats.csv", std::ios::app);
-    if (file.is_open()) {
-        file << opponent << "," << map << "," << strategy << "," << (win ? "1" : "0") << "\n";
-        file.close();
-    }
 }
 
 // Called whenever a unit is destroyed, with a pointer to the unit

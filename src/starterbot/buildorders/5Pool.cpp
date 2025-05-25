@@ -2,6 +2,7 @@
 #include "../Tools.h"
 #include "../../../visualstudio/BasesTools.h"
 #include "../micro.h"
+#include "BuildOrderTools.h"
 
 FivePool& FivePool::Instance() {
     static FivePool instance;
@@ -32,21 +33,8 @@ void FivePool::Execute() {
         }
     }
 
-    // Now proceed with 4 pool logic
-    if (BWAPI::Broodwar->self()->minerals() >= 190) {
-        Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
-    }
+    BuildOrderTools::PoolAllIn(myUnits);
 
-    // Train zerglings when pool is done
-    if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)) {
-        Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Zergling);
-
-        if (BWAPI::Broodwar->self()->minerals() >= 350) {
-            Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
-        }
-    }
-
-    Micro::BasicAttackAndScoutLoop(myUnits);
 }
 
 void FivePool::OnUnitCreate(BWAPI::Unit unit) {

@@ -26,6 +26,7 @@ public:
 	bool buildBuilding(BWAPI::UnitType building, int limitAmount, BWAPI::TilePosition desiredPos);
 	BWAPI::Unit getAvailableUnit(BWAPI::UnitType unitType);
 	void onEnd(bool isWinner);
+	void LogGameStats(const std::string opponent, const std::string& map, const std::string& strategy, bool win);
 	void onUnitDestroy(BWAPI::Unit unit);
 	void onUnitMorph(BWAPI::Unit unit);
 	void onSendText(std::string text);
@@ -36,5 +37,4 @@ public:
 	void onUnitShow(BWAPI::Unit unit);
 	void onUnitHide(BWAPI::Unit unit);
 	void onUnitRenegade(BWAPI::Unit unit);
-	void LogGameStats(const std::string& opponent, const std::string& map, const std::string& strategy, bool win);
 };

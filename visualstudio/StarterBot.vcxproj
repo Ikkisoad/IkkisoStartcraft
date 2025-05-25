@@ -24,11 +24,13 @@
     <ClInclude Include="..\src\starterbot\buildorders\6Pool.h" />
     <ClInclude Include="..\src\starterbot\buildorders\7Pool.h" />
     <ClInclude Include="..\src\starterbot\buildorders\8Pool.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\BuildOrderTools.h" />
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
     <ClInclude Include="..\src\starterbot\MapTools.h" />
     <ClInclude Include="..\src\starterbot\micro.h" />
     <ClInclude Include="..\src\starterbot\ReplayParser.h" />
     <ClInclude Include="..\src\starterbot\StarterBot.h" />
+    <ClInclude Include="..\src\starterbot\stats\stats.h" />
     <ClInclude Include="..\src\starterbot\Tools.h" />
     <ClInclude Include="BasesTools.h" />
     <ClInclude Include="src\starterbot\BuildOrder.h" />
@@ -54,11 +56,13 @@
     <ClCompile Include="..\src\starterbot\buildorders\6Pool.cpp" />
     <ClCompile Include="..\src\starterbot\buildorders\7Pool.cpp" />
     <ClCompile Include="..\src\starterbot\buildorders\8Pool.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\BuildOrderTools.cpp" />
     <ClCompile Include="..\src\starterbot\main.cpp" />
     <ClCompile Include="..\src\starterbot\MapTools.cpp" />
     <ClCompile Include="..\src\starterbot\micro.cpp" />
     <ClCompile Include="..\src\starterbot\ReplayParser.cpp" />
     <ClCompile Include="..\src\starterbot\StarterBot.cpp" />
+    <ClCompile Include="..\src\starterbot\stats\stats.cpp" />
     <ClCompile Include="..\src\starterbot\Tools.cpp" />
     <ClCompile Include="BasesTools.cpp" />
   </ItemGroup>

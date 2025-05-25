@@ -68,6 +68,8 @@
     <ClCompile Include="..\src\starterbot\buildorders\8Pool.cpp">
       <Filter>BOs</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\starterbot\stats\stats.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\BuildOrderTools.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
@@ -93,6 +95,8 @@
     <ClInclude Include="..\src\starterbot\buildorders\8Pool.h">
       <Filter>BOs</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\starterbot\stats\stats.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\BuildOrderTools.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="BWEM">
