@@ -9,10 +9,7 @@
 auto& bwem = BWEM::Map::Instance();  
 
 BWAPI::TilePosition mainBasePosition;
-BWAPI::TilePosition naturalBasePosition;
-BWAPI::TilePosition thirdBasePosition;
-BWAPI::TilePosition fourthBasePosition;
-BWAPI::TilePosition fifthBasePosition;
+//std::vector<BWAPI::Position> mainBasePosition;
 //TODO remove destroyed bases
 // Store all known enemy base positions
 std::vector<BWAPI::Position> enemyBasePositions;
@@ -123,10 +120,6 @@ namespace BasesTools {
         Tools::print(std::to_string(baseCount));
         enemyBasePositions.clear();
         mainBasePosition = BWAPI::TilePositions::None;
-        naturalBasePosition = BWAPI::TilePositions::None;
-        thirdBasePosition = BWAPI::TilePositions::None;
-        fourthBasePosition = BWAPI::TilePositions::None;
-        fifthBasePosition = BWAPI::TilePositions::None;
         CacheBWEMBases(); // <-- Add this line to cache base positions on initialization
     }
 
@@ -148,34 +141,12 @@ namespace BasesTools {
     void BasesTools::FindExpansions() {
         BWAPI::Position mainBase(BWAPI::Broodwar->self()->getStartLocation());
         mainBasePosition = BWAPI::TilePosition(mainBase);
-        auto bases = bwem.GetNearestArea(BWAPI::Broodwar->self()->getStartLocation())->AccessibleNeighbours();
-        for (auto& base : bases) {
-            for (auto& unit : base->Bases()) {
-                BWAPI::TilePosition pos(unit.Location());
-                naturalBasePosition = pos;
-            }
-        }
 		Tools::print("Main Base Position: " + std::to_string(mainBasePosition.x) + ", " + std::to_string(mainBasePosition.y));
-        Tools::print("Natural Base Position: " + std::to_string(naturalBasePosition.x) + ", " + std::to_string(naturalBasePosition.y));
     }
 
     void BasesTools::DrawExpansions() {
         BWAPI::Broodwar->drawCircleMap(BWAPI::Position(mainBasePosition), 32, BWAPI::Colors::Red, true);
-        BWAPI::Broodwar->drawCircleMap(BWAPI::Position(naturalBasePosition), 32, BWAPI::Colors::Red, true);
-        //BWAPI::Broodwar->drawCircleMap(thirdBasePosition, 32, BWAPI::Colors::Red, true);
-        //BWAPI::Broodwar->drawCircleMap(fourthBasePosition, 32, BWAPI::Colors::Red, true);
-        //BWAPI::Broodwar->drawCircleMap(fifthBasePosition, 32, BWAPI::Colors::Red, true);
     }
-
-    void BasesTools::FindThirdBase() {
-        auto bases = bwem.GetNearestArea(BWAPI::Broodwar->self()->getStartLocation())->AccessibleNeighbours();
-        for (auto& base : bases) {
-            for (auto& unit : base->Bases()) {
-                BWAPI::TilePosition pos(unit.Location());
-                if (!thirdBasePosition) thirdBasePosition = pos;
-            }
-        }
-	}
 
     BWAPI::Position BasesTools::ReturnBasePosition(BWEM::Area area) {
         if (area.Bases().size() <= 0) {
@@ -230,19 +201,6 @@ namespace BasesTools {
     BWAPI::TilePosition BasesTools::GetMainBasePosition() {
         return mainBasePosition;
 	}
-
-    BWAPI::TilePosition BasesTools::GetNaturalBasePosition() {
-        return naturalBasePosition;
-    }
-    BWAPI::TilePosition BasesTools::GetThirdBasePosition() {
-        return thirdBasePosition;
-    }
-    BWAPI::TilePosition BasesTools::GetFourthBasePosition() {
-        return fourthBasePosition;
-    }
-    BWAPI::TilePosition BasesTools::GetFifthBasePosition() {
-        return fifthBasePosition;
-    }
 
     std::vector<BWAPI::Position> BasesTools::GetBWEMBases() {
         std::vector<BWAPI::Position> basePositions;

@@ -44,7 +44,9 @@ void EightPool::Execute() {
 
     }
     if (BWAPI::Broodwar->self()->minerals() >= 190) {
-        builtSpawningPool = Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation());
+        if (!Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation())) {
+            Tools::BuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, BWAPI::Broodwar->self()->getStartLocation());
+        }
     }
 
     if (builtSpawningPool) {

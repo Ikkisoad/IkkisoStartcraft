@@ -7,6 +7,7 @@
 #include "Factory/BuildOrderFactory.h"
 #include "micro.h"
 #include "stats/stats.h"
+#include <random>
 
 StarterBot::StarterBot()
 {
@@ -22,12 +23,28 @@ BWAPI::Unit scout;
 // Called when the bot starts!
 void StarterBot::onStart()
 {
-    Stats::GetStatsLine();
+    std::string oponentName = "";
+    for (auto player : BWAPI::Broodwar->getPlayers()) {
+        if (player != BWAPI::Broodwar->self() && player != BWAPI::Broodwar->neutral()) {
+            oponentName = player->getName();
+        }
+    }
+
+    auto strategy = Stats::readStrategy("strats-v0", oponentName, BWAPI::Broodwar->mapHash());
+
+
+    static std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> distX(0, sizeof(BuildOrderType));
+    int x = distX(rng);
+
+    BWAPI::Broodwar->printf("Random number: %i and size of enum %i", x, sizeof(BuildOrderType));
+
     BasesTools::Initialize();
     mineralsFrame = 0;
     // Select the build order type you want to use
-    BuildOrderType selectedBuildOrder = BuildOrderType::EightPool;
+    BuildOrderType selectedBuildOrder = static_cast<BuildOrderType>(x);
     currentBuildOrder = BuildOrderFactory::Create(selectedBuildOrder);
+    BWAPI::Broodwar->printf("Strategy selected: %s", currentBuildOrder->GetName());
 
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
 
@@ -141,6 +158,9 @@ void StarterBot::onEnd(bool isWinner)
     }
     Stats::LogGameStats(oponentName, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
     std::cout << "We " << (isWinner ? "won!" : "lost!") << "\n";
+
+    // At end of match
+    Stats::updateWinRateFile("strats-v0", oponentName, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
 }
 
 // Called whenever a unit is destroyed, with a pointer to the unit
