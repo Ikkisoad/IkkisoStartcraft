@@ -223,7 +223,7 @@ Kel-Morian Combine,ba2fc0ed637e4ec91cc70424335b3c13e131b75a,FourPool,1,1
 Auriga Tribe,1e983eb6bcfa02ef7d75bd572cb59ad3aab49285,FivePool,1,0
 Surtur Brood,af618ea3ed8a8926ca7b17619eebcb9126f0d8b1,SixPool,2,2
 Furinax Tribe,ba2fc0ed637e4ec91cc70424335b3c13e131b75a,FivePool,1,1
-Shelak Tribe,450a792de0e544b51af5de578061cb8a2f020f32,SevenPool,2,0
+Shelak Tribe,450a792de0e544b51af5de578061cb8a2f020f32,SevenPool,3,1
 Jormungand Brood,1e983eb6bcfa02ef7d75bd572cb59ad3aab49285,FourPool,1,1
 Epsilon Squadron,4e24f217d2fe4dbfa6799bc57f74d8dc939d425b,SixPool,1,1
 Elite Guard,ba2fc0ed637e4ec91cc70424335b3c13e131b75a,FivePool,1,1
@@ -326,3 +326,7 @@ Tiamat Brood,a220d93efdf05a439b83546a579953c63c863ca7,SixPool,1,1
 Elite Guard,1e983eb6bcfa02ef7d75bd572cb59ad3aab49285,EightPool,1,1
 Mar Sara,af618ea3ed8a8926ca7b17619eebcb9126f0d8b1,SevenPool,1,0
 Shelak Tribe,6f8da3c3cc8d08d9cf882700efa049280aedca8c,SevenPool,1,0
+Venatir Tribe,Unknown,9bfc271360fa5bab3707a29e1326b84d0ff58911,SixPool,1,0
+Surtur Brood,Unknown,6f8da3c3cc8d08d9cf882700efa049280aedca8c,FivePool,1,1
+Baelrog Brood,Unknown,af618ea3ed8a8926ca7b17619eebcb9126f0d8b1,SevenPool,1,1
+Tiamat Brood,Unknown,de2ada75fbc741cfa261ee467bf6416b10f9e301,SevenPool,1,0

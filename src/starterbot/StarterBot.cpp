@@ -24,13 +24,14 @@ BWAPI::Unit scout;
 void StarterBot::onStart()
 {
     std::string oponentName = "";
+    std::string oponentRace = "";
     for (auto player : BWAPI::Broodwar->getPlayers()) {
         if (player != BWAPI::Broodwar->self() && player != BWAPI::Broodwar->neutral()) {
             oponentName = player->getName();
+            oponentRace = player->getRace().getName();
         }
     }
-
-    auto strategy = Stats::readStrategy("strats-v0", oponentName, BWAPI::Broodwar->mapHash());
+    auto strategy = Stats::readStrategy(oponentName, oponentRace, BWAPI::Broodwar->mapHash());
 
 
     static std::mt19937 rng(std::random_device{}());
@@ -152,16 +153,15 @@ void StarterBot::drawDebugInformation()
 void StarterBot::onEnd(bool isWinner)
 {
     std::string oponentName = "";
+    std::string oponentRace = "";
     for (auto player : BWAPI::Broodwar->getPlayers()) {
         if (player != BWAPI::Broodwar->self() && player != BWAPI::Broodwar->neutral()) {
             oponentName = player->getName();
+            oponentRace = player->getRace().getName();
         }
     }
-    Stats::LogGameStats(oponentName, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
     std::cout << "We " << (isWinner ? "won!" : "lost!") << "\n";
-
-    // At end of match
-    Stats::updateWinRateFile("strats-v0", oponentName, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
+    Stats::updateWinRateFile(oponentName, oponentRace, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
 }
 
 // Called whenever a unit is destroyed, with a pointer to the unit
