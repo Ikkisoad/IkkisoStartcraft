@@ -413,12 +413,16 @@ void Micro::sendIdleWorkersToMinerals()
     }
 }
 
-void Micro::GatherMinerals(BWAPI::Unit unit) {
-    // Get the closest mineral to this worker unit
-    BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
+void Micro::GatherMinerals(BWAPI::Unit unit) {  
+    if (!unit) return; // Check for nullness to address C26429  
 
-    // If a valid mineral was found, right click it with the unit in order to start harvesting
-    if (closestMineral) { unit->rightClick(closestMineral); }
+    // Get the closest mineral to this worker unit  
+    BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());  
+
+    // If a valid mineral was found, right click it with the unit in order to start harvesting  
+    if (closestMineral) {  
+        unit->rightClick(closestMineral);  
+    }  
 }
 
 void Micro::SmartGatherMinerals(BWAPI::Unit drone)
@@ -525,6 +529,7 @@ void Micro::SmartGatherMinerals(BWAPI::Unit drone)
 }
 
 void Micro::unitAttack(BWAPI::Unit unit) {
+    if (!unit) return;
     const BWAPI::Position enemyBase = BasesTools::GetEnemyBasePosition();
     if (enemyBase == BWAPI::Positions::None) {
         Micro::ScoutAndWander(unit);
@@ -642,12 +647,13 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
 }
 
 void Micro::Retreat(BWAPI::Unit unit) {
-    // Only micro if the unit is not busy with something else
+    if (!unit) return;
     if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) return;
     SmartMove(unit, BWAPI::Position(BasesTools::GetMainBasePosition()));
 }
 
 void Micro::Flee(BWAPI::Unit unit, BWAPI::Unit closestLethal) {
+    if (!unit || !closestLethal) return;
 
     // Flee from the closest lethal enemy in range, but always slightly to the right or left
     BWAPI::Position myPos = unit->getPosition();
