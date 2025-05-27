@@ -45,6 +45,7 @@ void StarterBot::onStart()
     BuildOrderType selectedBuildOrder = static_cast<BuildOrderType>(x);
     currentBuildOrder = BuildOrderFactory::Create(selectedBuildOrder);
     BWAPI::Broodwar->printf("Strategy selected: %s", currentBuildOrder->GetName());
+    std::cout << "Using strategy " << currentBuildOrder->GetName() << "\n";
 
     scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
 
