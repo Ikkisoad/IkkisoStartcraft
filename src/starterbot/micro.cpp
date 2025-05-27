@@ -413,6 +413,14 @@ void Micro::sendIdleWorkersToMinerals()
     }
 }
 
+void Micro::GatherMinerals(BWAPI::Unit unit) {
+    // Get the closest mineral to this worker unit
+    BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
+
+    // If a valid mineral was found, right click it with the unit in order to start harvesting
+    if (closestMineral) { unit->rightClick(closestMineral); }
+}
+
 void Micro::SmartGatherMinerals(BWAPI::Unit drone)
 {
     if (!drone || !drone->exists()) return;
@@ -569,7 +577,7 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
             continue;
         }
         if (unit->getType().isWorker()) {
-            Micro::sendIdleWorkersToMinerals();
+            if (unit->isIdle()) Micro::GatherMinerals(unit);
             continue;
         }
 
@@ -613,7 +621,7 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
                     }
                     int range = nearestOffensive->getType().groundWeapon().maxRange();
                     int dist = unit->getDistance(nearestOffensive);
-                    if (nearestOffensive && enemyCount > (allyCount * 2) + 1 && range + safeRange >= dist) {
+                    if (enemyCount > (allyCount * 2) + 1 && range + safeRange >= dist) {
                         Micro::Flee(unit, nearestOffensive);
                         return;
                     }
