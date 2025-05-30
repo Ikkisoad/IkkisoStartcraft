@@ -148,8 +148,8 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
             return;
         }
     }
-    if (!scout->isIdle() && !BWAPI::Broodwar->isExplored(BWAPI::TilePosition(scout->getOrderTargetPosition()))) return;
-
+    auto orderPos = scout->getOrderTargetPosition();
+    if (!scout->isIdle() && orderPos != BWAPI::Positions::None && !BWAPI::Broodwar->isExplored(BWAPI::TilePosition(orderPos))) return;
 
     // First, try to scout the nearest unexplored starting location
     const auto& startLocations = BWAPI::Broodwar->getStartLocations();
