@@ -60,7 +60,6 @@ void Genetic::Execute() {
     std::uniform_int_distribution<size_t> dist(0, buildOrder.size() - 1);
     size_t actionIndex = dist(rng);
     const BuildAction& action = buildOrder[actionIndex];
-
     bool issued = false;
     switch (action.actionType) {
         case ActionType::Building:
@@ -79,6 +78,7 @@ void Genetic::Execute() {
 
     if (issued) {
         LogEvent("Issued: " + action.unitType.getName() + " (or upgrade/tech) at supply " + std::to_string(currentSupply) + " frame " + std::to_string(currentFrame));
+        //Tools::print("Issued: " + action.unitType.getName() + " (or upgrade/tech) at supply " + std::to_string(currentSupply) + " frame " + std::to_string(currentFrame));
     }
 
     Micro::BasicAttackAndScoutLoop(BWAPI::Broodwar->self()->getUnits());
@@ -107,6 +107,29 @@ void Genetic::onEnd(bool isWinner) {
                 << "CustomScore:" << customScore
                 << std::endl;
     }
+}
+
+// Helper: Parse a build order string into BuildAction vector (very basic, adjust as needed)
+std::vector<BuildAction> ParseBuildOrder(const std::string& orderStr) {
+    std::vector<BuildAction> actions;
+    std::istringstream iss(orderStr);
+    std::string token;
+    while (std::getline(iss, token, ';')) {
+        // You need to implement a parser that reconstructs BuildAction from the log string
+        // For now, this is a placeholder
+        // actions.push_back(...);
+    }
+    return actions;
+}
+
+// Helper: Mutate a build order (swap two actions)
+void MutateBuildOrder(std::vector<BuildAction>& actions) {
+    if (actions.size() < 2) return;
+    static std::mt19937 rng{std::random_device{}()};
+    std::uniform_int_distribution<size_t> dist(0, actions.size() - 1);
+    size_t i = dist(rng);
+    size_t j = dist(rng);
+    if (i != j) std::swap(actions[i], actions[j]);
 }
 
 void Genetic::AnalyzeBuildOrderResults() {
@@ -143,6 +166,34 @@ void Genetic::AnalyzeBuildOrderResults() {
                   << "  Games: " << result.games
                   << "  Wins: " << result.wins
                   << "  AvgScore: " << avgScore << "\n";
+    }
+
+    std::ofstream bestFile("best_build_orders.txt");
+    for (const auto& [order, result] : buildOrderStats) {
+        if (result.games >= 3 && result.wins > 0) { // Example filter
+            bestFile << order << "\n";
+        }
+    }
+
+    std::vector<std::string> bestBuildOrders;
+    std::ifstream bestFileInput("best_build_orders.txt");
+    while (std::getline(bestFileInput, line)) {
+        bestBuildOrders.push_back(line);
+    }
+
+    if (!bestBuildOrders.empty()) {
+        static std::mt19937 rng{std::random_device{}()};
+        std::uniform_int_distribution<size_t> dist(0, bestBuildOrders.size() - 1);
+        std::string selectedOrder = bestBuildOrders[dist(rng)];
+
+        // Parse and mutate
+        std::vector<BuildAction> actions = ParseBuildOrder(selectedOrder);
+        MutateBuildOrder(actions);
+
+        // Use mutated build order for this game
+        if (!actions.empty()) {
+            buildOrder = actions;
+        }
     }
 }
 

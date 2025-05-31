@@ -709,6 +709,7 @@ void MapImpl::OnMineralDestroyed(BWAPI::Unit u)
 
 void MapImpl::OnStaticBuildingDestroyed(BWAPI::Unit u)
 {
+	if (m_StaticBuildings.empty()) return;
 	auto iStaticBuilding = find_if(m_StaticBuildings.begin(), m_StaticBuildings.end(), [u](const unique_ptr<StaticBuilding> & g){ return g->Unit() == u; });
 	bwem_assert(iStaticBuilding != m_StaticBuildings.end());
 
