@@ -12,6 +12,7 @@ namespace Micro
     void SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit);
     void sendIdleWorkersToMinerals();
     void GatherMinerals(BWAPI::Unit unit);
+    void GatherResources(BWAPI::Unit unit);
     void SmartGatherMinerals(BWAPI::Unit drone);
     void unitAttack(BWAPI::Unit unit);
     void attack();

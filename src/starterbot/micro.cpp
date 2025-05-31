@@ -425,6 +425,36 @@ void Micro::GatherMinerals(BWAPI::Unit unit) {
     }  
 }
 
+void Micro::GatherResources(BWAPI::Unit unit) {
+    if (!unit) return; // Check for nullness to address C26429  
+
+	BWAPI::Unit extractor = nullptr;
+    int workersOnGas = 0;
+
+    for (auto u : BWAPI::Broodwar->self()->getUnits()) {
+        if (u->isCarryingGas() || u->isGatheringGas()) {
+            workersOnGas++;
+		}
+        if (u->getType() == BWAPI::UnitTypes::Zerg_Extractor) {
+            extractor = u;
+        }
+	}
+
+    if (workersOnGas < 3 && extractor) {
+        // If we already have enough workers on gas, gather minerals
+        unit->rightClick(extractor);
+        return;
+	}
+
+    // Get the closest mineral to this worker unit  
+    BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
+
+    // If a valid mineral was found, right click it with the unit in order to start harvesting  
+    if (closestMineral) {
+        unit->rightClick(closestMineral);
+    }
+}
+
 void Micro::SmartGatherMinerals(BWAPI::Unit drone)
 {
     if (!drone || !drone->exists()) return;
@@ -582,7 +612,7 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
             continue;
         }
         if (unit->getType().isWorker()) {
-            if (unit->isIdle()) Micro::GatherMinerals(unit);
+            if (unit->isIdle()) Micro::GatherResources(unit);
             continue;
         }
 

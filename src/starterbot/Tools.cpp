@@ -142,6 +142,24 @@ bool Tools::MorphLarva(BWAPI::UnitType unit) {
     return false;
 }
 
+bool Tools::ResearchUpgrade(BWAPI::UpgradeType upgrade) {
+    for (auto u : BWAPI::Broodwar->self()->getUnits()) {
+        // if the unit is a hatchery, lair or hive, and it has enough minerals and gas
+        if (u->canResearch(upgrade) && BWAPI::Broodwar->self()->minerals() >= upgrade.mineralPrice() && BWAPI::Broodwar->self()->gas() >= upgrade.gasPrice()) {
+            return u->upgrade(upgrade);
+        }
+	}
+}
+
+bool Tools::ResearchTech(BWAPI::TechType upgrade) {
+    for (auto u : BWAPI::Broodwar->self()->getUnits()) {
+        // if the unit is a hatchery, lair or hive, and it has enough minerals and gas
+        if (u->canResearch(upgrade) && BWAPI::Broodwar->self()->minerals() >= upgrade.mineralPrice() && BWAPI::Broodwar->self()->gas() >= upgrade.gasPrice()) {
+            return u->research(upgrade);
+        }
+    }
+}
+
 // Attempt to construct a building of a given type 
 bool Tools::BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation())
 {
