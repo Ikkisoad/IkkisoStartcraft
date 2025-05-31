@@ -1,0 +1,9 @@
+0,4,GameStart
+0,4,GameStart
+0,4,GameStart
+0,5,Issued: Zerg_Drone at supply 4 frame 0
+381,6,Issued: Zerg_Drone at supply 5 frame 381
+638,7,Issued: Zerg_Drone at supply 6 frame 638
+861,8,Issued: Zerg_Drone at supply 7 frame 861
+1040,9,Issued: Zerg_Drone at supply 8 frame 1040
+1863,9,Issued: Zerg_Spawning_Pool at supply 9 frame 1863

@@ -25,6 +25,7 @@
     <ClInclude Include="..\src\starterbot\buildorders\7Pool.h" />
     <ClInclude Include="..\src\starterbot\buildorders\8Pool.h" />
     <ClInclude Include="..\src\starterbot\buildorders\BuildOrderTools.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\Genetic.h" />
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
     <ClInclude Include="..\src\starterbot\MapTools.h" />
     <ClInclude Include="..\src\starterbot\micro.h" />
@@ -57,6 +58,7 @@
     <ClCompile Include="..\src\starterbot\buildorders\7Pool.cpp" />
     <ClCompile Include="..\src\starterbot\buildorders\8Pool.cpp" />
     <ClCompile Include="..\src\starterbot\buildorders\BuildOrderTools.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\Genetic.cpp" />
     <ClCompile Include="..\src\starterbot\main.cpp" />
     <ClCompile Include="..\src\starterbot\MapTools.cpp" />
     <ClCompile Include="..\src\starterbot\micro.cpp" />

@@ -6,8 +6,9 @@
 #include "../buildorders/6Pool.h"
 #include "../buildorders/7Pool.h"
 #include "../buildorders/8Pool.h"
+#include "../buildorders/Genetic.h"
 
-enum class BuildOrderType { FourPool, FivePool, SixPool, SevenPool, EightPool };
+enum class BuildOrderType { FourPool, FivePool, SixPool, SevenPool, EightPool, Genetic };
 
 class BuildOrderFactory {
 public:
@@ -20,6 +21,7 @@ public:
             case BuildOrderType::SixPool: return &SixPool::Instance();
             case BuildOrderType::SevenPool: return &SevenPool::Instance();
             case BuildOrderType::EightPool: return &EightPool::Instance();
+            case BuildOrderType::Genetic: return &Genetic::Instance();
             default: return nullptr;
         }
     }
