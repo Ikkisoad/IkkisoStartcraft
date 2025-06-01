@@ -75,16 +75,6 @@ void StarterBot::onFrame()
     currentBuildOrder->Execute();
 }
 
-BWAPI::Unit StarterBot::getAvailableUnit(BWAPI::UnitType unitType) {
-    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-    for (auto& unit : myUnits) {
-        // Check the unit type, if it is an idle worker, then we want to send it somewhere
-        if (unit->getType() == unitType && unit->isIdle()) {
-            // Get the closest mineral to this worker unit
-            return unit;
-        }
-    }
-}
 
 // Train more workers so we can gather more income
 bool StarterBot::trainUnit(BWAPI::UnitType unit) {
@@ -144,26 +134,14 @@ void StarterBot::onEnd(bool isWinner)
 // Called whenever a unit is destroyed, with a pointer to the unit
 void StarterBot::onUnitDestroy(BWAPI::Unit unit)
 {
-    const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
-    if (supplyProviderType == unit->getType()) {
-        unusedSupplyAccepted--;
-    }
-    BasesTools::OnUnitDestroyed(unit);
-    // Remove enemy base if the destroyed unit was an enemy building at a known base position
-    if (unit->getPlayer() != BWAPI::Broodwar->self() &&
-        unit->getPlayer() != BWAPI::Broodwar->neutral() &&
-        unit->getType().isBuilding())
-    {
-        // Check if this building was at a known enemy base position (within a reasonable distance)
-        BasesTools::RemoveEnemyBasePosition(unit->getPosition());
-    }
+    currentBuildOrder->onUnitDestroy(unit);
 }
 
 // Called whenever a unit is morphed, with a pointer to the unit
 // Zerg units morph when they turn into other units
 void StarterBot::onUnitMorph(BWAPI::Unit unit)
 {
-	
+    currentBuildOrder->onUnitMorph(unit);
 }
 
 // Called whenever a text is sent to the game by a user
@@ -195,6 +173,7 @@ void StarterBot::onSendText(std::string text)
     if (text == "s") { //
         Micro::SetMode(Micro::MicroMode::Neutral);
     }
+    currentBuildOrder->onSendText(text);
 }
 
 void StarterBot::attack() {
@@ -269,18 +248,19 @@ void StarterBot::onUnitShow(BWAPI::Unit unit)
             BasesTools::SetEnemyBasePosition(unit->getPosition());
         }
     }
+    currentBuildOrder->onUnitShow(unit);
 }
 
 // Called whenever a unit gets hidden, with a pointer to the destroyed unit
 // This is usually triggered when units enter the fog of war and are no longer visible
 void StarterBot::onUnitHide(BWAPI::Unit unit)
-{ 
-	
+{
+    currentBuildOrder->onUnitHide(unit);
 }
 
 // Called whenever a unit switches player control
 // This usually happens when a dark archon takes control of a unit
 void StarterBot::onUnitRenegade(BWAPI::Unit unit)
-{ 
-	
+{
+    currentBuildOrder->onUnitRenegade(unit);
 }
