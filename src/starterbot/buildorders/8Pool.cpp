@@ -14,11 +14,13 @@ void EightPool::onStart() {
     builtExtractor = false;
     builtSpawningPool = false;
 	Micro::SetMode(Micro::MicroMode::Aggressive);
+    BasesTools::SetOurBasePosition();
 }
 
 void EightPool::Execute() {
     const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
 
+    int hatchCount = Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Hatchery) + Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Lair) + Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Hive);
     // Build up to 8 drones before pool
     if (!builtEightDrones) {
         const int droneCount = Tools::CountUnitsOfType(BWAPI::UnitTypes::Zerg_Drone, myUnits, true);
@@ -32,7 +34,7 @@ void EightPool::Execute() {
     }
     else {
 
-        if (BWAPI::Broodwar->self()->gas() >= 100) {
+        if (BWAPI::Broodwar->self()->gas() >= 100 && hatchCount <= 1) {
             for (auto unit : myUnits) {
                 if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
                     unit->upgrade(BWAPI::UpgradeTypes::Metabolic_Boost);
@@ -41,7 +43,19 @@ void EightPool::Execute() {
 					unit->gather(unit->getClosestUnit(BWAPI::Filter::IsMineralField));
                 }
 			}
-		}
+        }
+        else if(BWAPI::Broodwar->self()->gas() >= 150){
+            for (auto unit : myUnits) {
+                if ((unit->getType() == BWAPI::UnitTypes::Zerg_Hatchery || unit->getType() == BWAPI::UnitTypes::Zerg_Lair) && (Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Lair) < 1 || Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Hive) < 1)) {
+                    if (unit->getType() == BWAPI::UnitTypes::Zerg_Hatchery) {
+                        unit->morph(BWAPI::UnitTypes::Zerg_Lair);
+                    }
+                    else {
+                        unit->morph(BWAPI::UnitTypes::Zerg_Hive);
+                    }
+                }
+            }
+        }
 
     }
     if (BWAPI::Broodwar->self()->minerals() >= 190) {
@@ -55,9 +69,18 @@ void EightPool::Execute() {
         if (BWAPI::Broodwar->self()->supplyTotal() == BWAPI::Broodwar->self()->supplyUsed()) Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Overlord);
     }
 
-    int hatchCount = Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Hatchery);
     if (hatchCount > 1) {
+        Micro::SetMode(Micro::MicroMode::Neutral);
+        if (Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Zergling) / BWAPI::Broodwar->self()->supplyUsed() <= 0.2) {
+            //Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Zergling);
+            for (auto b : BasesTools::GetAllOurBasePositions()) {
+                Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Creep_Colony, 0, BWAPI::TilePosition(b));
+            }
+        }
         if (hatchCount * 20 > Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Drone)) Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Drone);
+    }
+    else {
+        Micro::SetMode(Micro::MicroMode::Aggressive);
     }
 
     // Train zerglings when pool is done
@@ -90,5 +113,11 @@ void EightPool::onUnitComplete(BWAPI::Unit unit) {
     }
     if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
         builtSpawningPool = true;
+    }
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Creep_Colony) {
+        unit->morph(BWAPI::UnitTypes::Zerg_Sunken_Colony);
+    }
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Hatchery) {
+        BasesTools::SetOurBasePosition();
     }
 }

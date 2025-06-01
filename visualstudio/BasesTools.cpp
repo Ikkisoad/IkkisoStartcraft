@@ -41,7 +41,7 @@ namespace BasesTools {
         }
     }
 
-    void SetOurBasePosition(const BWAPI::Position& pos) {
+    void SetOurBasePosition() {
         for (const auto& basePos : allBasePositions) {
             BWAPI::TilePosition tilePos(basePos);
             bool foundDepot = false;
@@ -60,6 +60,10 @@ namespace BasesTools {
                 }
             }
         }
+    }
+
+    const std::vector<BWAPI::Position>& BasesTools::GetAllOurBasePositions() {
+        return ourBasePositions;
     }
 
     // Not working properly

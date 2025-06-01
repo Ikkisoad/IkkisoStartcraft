@@ -206,6 +206,9 @@ void StarterBot::onSendText(std::string text)
     if (text == "4") { //
         BWAPI::Broodwar->setLocalSpeed(128); //32
     }
+    if (text == "s") { //
+        Micro::SetMode(Micro::MicroMode::Neutral);
+    }
 }
 
 void StarterBot::attack() {

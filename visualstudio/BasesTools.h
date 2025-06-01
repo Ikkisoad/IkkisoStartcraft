@@ -7,6 +7,7 @@ namespace BasesTools {
 	void Initialize();
 	bool IsAreaOurBase(BWAPI::Position position, int range);
 	void CacheBWEMBases();
+	const std::vector<BWAPI::Position>& GetAllOurBasePositions();
 	void VerifyEnemyBases();
 	const std::vector<BWAPI::Position>& GetAllBasePositions();
 	void FindExpansionsV1();
@@ -26,6 +27,7 @@ namespace BasesTools {
 	void OnUnitDestroyed(BWAPI::Unit unit);
 	// Add getter and setter for enemy base position
 	void SetEnemyBasePosition(const BWAPI::Position& pos);
+	void SetOurBasePosition();
 	BWAPI::Position GetEnemyBasePosition();
 	BWAPI::Position GetNearestBasePosition(const BWAPI::Position& position);
 	void DrawAllBases(BWAPI::Color color);
