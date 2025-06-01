@@ -2,6 +2,8 @@
 #include <BWAPI.h>
 #include <vector>
 #include <algorithm>
+#include <sstream> // Include necessary header for stringstream
+#include "micro.h"
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
@@ -198,7 +200,6 @@ static bool IsNearMiningPath(const BWAPI::TilePosition& tile, int buffer = 2) {
     return false;
 }
 
-// Attempts to build a building at the optimal location near the closest builder to desiredPos
 bool Tools::BuildBuildingOptimal(BWAPI::UnitType type, BWAPI::TilePosition desiredPos) {
     // Get the type of unit that is required to build the desired building
     BWAPI::UnitType builderType = type.whatBuilds().first;
@@ -215,42 +216,48 @@ bool Tools::BuildBuildingOptimal(BWAPI::UnitType type, BWAPI::TilePosition desir
         }
     }
     if (!builder) return false;
-
-    if (type == BWAPI::UnitTypes::Zerg_Hive || type == BWAPI::UnitTypes::Zerg_Lair || type == BWAPI::UnitTypes::Zerg_Sunken_Colony || type == BWAPI::UnitTypes::Zerg_Spore_Colony) {
-        // Special case for Hive and Lair, they can only be built at the main base
-		builder->morph(type);
-		return true;
-    }
-
-    int maxBuildRange = 16; // Tight range for fast buildings like Spawning Pool
     bool buildingOnCreep = type.requiresCreep();
-    BWAPI::TilePosition startTile = builder->getTilePosition();
 
-    // Search for a valid build location near the builder, avoiding mining paths
-    BWAPI::TilePosition bestPos = BWAPI::TilePositions::Invalid;
-    int bestDist = std::numeric_limits<int>::max();
+    if (type != BWAPI::UnitTypes::Zerg_Hatchery) {
 
-    for (int dx = -maxBuildRange; dx <= maxBuildRange; ++dx) {
-        for (int dy = -maxBuildRange; dy <= maxBuildRange; ++dy) {
-            BWAPI::TilePosition candidate = startTile + BWAPI::TilePosition(dx, dy);
-            if (!candidate.isValid()) continue;
-            if (!BWAPI::Broodwar->canBuildHere(candidate, type, builder, buildingOnCreep)) continue;
-            if (IsNearMiningPath(candidate, 2)) continue; // Avoid mining path
+        if (type == BWAPI::UnitTypes::Zerg_Hive || type == BWAPI::UnitTypes::Zerg_Lair || type == BWAPI::UnitTypes::Zerg_Sunken_Colony || type == BWAPI::UnitTypes::Zerg_Spore_Colony) {
+            // Special case for Hive and Lair, they can only be built at the main base
+            builder->morph(type);
+            return true;
+        }
 
-            int dist = builder->getDistance(BWAPI::Position(candidate));
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestPos = candidate;
+        int maxBuildRange = 16; // Tight range for fast buildings like Spawning Pool
+        BWAPI::TilePosition startTile = builder->getTilePosition();
+
+        // Search for a valid build location near the builder, avoiding mining paths
+        BWAPI::TilePosition bestPos = BWAPI::TilePositions::Invalid;
+        int bestDist = std::numeric_limits<int>::max();
+
+        for (int dx = -maxBuildRange; dx <= maxBuildRange; ++dx) {
+            for (int dy = -maxBuildRange; dy <= maxBuildRange; ++dy) {
+                BWAPI::TilePosition candidate = startTile + BWAPI::TilePosition(dx, dy);
+                if (!candidate.isValid()) continue;
+                if (!BWAPI::Broodwar->canBuildHere(candidate, type, builder, buildingOnCreep)) continue;
+                if (IsNearMiningPath(candidate, 2)) continue; // Avoid mining path
+
+                int dist = builder->getDistance(BWAPI::Position(candidate));
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestPos = candidate;
+                }
             }
         }
-    }
 
-    if (bestPos.isValid()) {
-        return builder->build(type, bestPos);
+        if (bestPos.isValid()) {
+            return builder->build(type, bestPos);
+        }
+    } else if (!BWAPI::Broodwar->isExplored(desiredPos) || !builder->build(type, desiredPos)) {
+        Micro::SmartScoutMove(builder, BWAPI::Position(desiredPos));
+        return true;
     }
 
     // Fallback: use BWAPI's default search if no optimal found
-    BWAPI::TilePosition fallback = BWAPI::Broodwar->getBuildLocation(type, desiredPos, 64, buildingOnCreep);
+    const BWAPI::TilePosition fallback = BWAPI::Broodwar->getBuildLocation(type, desiredPos, 64, buildingOnCreep); // Mark fallback as const to fix C26496
     if (fallback.isValid()) {
         return builder->build(type, fallback);
     }
@@ -293,8 +300,23 @@ void Tools::DrawUnitBoundingBoxes()
     {
         BWAPI::Position topLeft(unit->getLeft(), unit->getTop());
         BWAPI::Position bottomRight(unit->getRight(), unit->getBottom());
+
+        // Fix the problematic line by converting Position to a string using BWAPI::Text::Enum::Default formatting  
+        if (unit->getType().isBuilding()) BWAPI::Broodwar->drawTextMap(unit->getPosition(), "%s", PositionToString(unit->getPosition()).c_str());
         BWAPI::Broodwar->drawBoxMap(topLeft, bottomRight, BWAPI::Colors::White);
     }
+}
+
+std::string Tools::PositionToString(const BWAPI::Position& position) {
+    std::ostringstream oss;
+    oss << "(" << position.x << ", " << position.y << ")";
+    return oss.str();
+}
+
+std::string Tools::TilePositionToString(const BWAPI::TilePosition& position) {
+    std::ostringstream oss;
+    oss << "(" << position.x << ", " << position.y << ")";
+    return oss.str();
 }
 
 void Tools::SmartRightClick(BWAPI::Unit unit, BWAPI::Unit target)

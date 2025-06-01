@@ -23,6 +23,8 @@ namespace Tools
     bool BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos);
 
     void DrawUnitBoundingBoxes();
+    std::string PositionToString(const BWAPI::Position& position);
+    std::string TilePositionToString(const BWAPI::TilePosition& position);
     bool BuildBuildingOptimal(BWAPI::UnitType type, BWAPI::TilePosition desiredPos);
     void DrawUnitCommands();
 

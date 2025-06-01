@@ -118,6 +118,27 @@ void Micro::SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit) {
     SmartMove(meleeUnit, fleeVector);
 }
 
+// SmartScoutMove: Move a scout to a target position only if no other friendly unit is already moving there
+void Micro::SmartScoutMove(BWAPI::Unit scout, BWAPI::Position targetPos)
+{
+    if (!scout) return;
+    if (targetPos == BWAPI::Positions::None) return;
+
+    // Check if another friendly unit is already moving to this position
+    for (auto unit : BWAPI::Broodwar->getAllUnits()) {
+        if (unit->getPlayer() == BWAPI::Broodwar->self() &&
+            unit != scout &&
+            unit->getLastCommand().getType() == BWAPI::UnitCommandTypes::Move &&
+            unit->getOrderTargetPosition() == targetPos) {
+            // Another unit is already moving to this position
+            return;
+        }
+    }
+
+    // If not already being scouted, move the scout to the target position
+    SmartMove(scout, targetPos);
+}
+
 void Micro::ScoutAndWander(BWAPI::Unit scout)
 {
     if (!scout) return;

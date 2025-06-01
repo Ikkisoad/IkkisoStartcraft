@@ -18,6 +18,7 @@ namespace Micro
     void SmartMove(BWAPI::Unit unit, BWAPI::Position position);
     void SmartKiteTarget(BWAPI::Unit rangedUnit, BWAPI::Unit target);
     void SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit);
+    void SmartScoutMove(BWAPI::Unit scout, BWAPI::Position targetPos);
     void ScoutAndWander(BWAPI::Unit scout);
     void SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit, bool alwaysAvoid);
     void sendIdleWorkersToMinerals();

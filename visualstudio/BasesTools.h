@@ -31,4 +31,5 @@ namespace BasesTools {
 	void DrawAllBases(BWAPI::Color color);
 	void RemoveEnemyBasePosition(const BWAPI::Position pos);
 	void DrawEnemyBases(BWAPI::Color color);
+	BWAPI::TilePosition GetNextExpansionPosition();
 }

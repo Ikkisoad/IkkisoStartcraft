@@ -14,51 +14,18 @@ BWAPI::TilePosition mainBasePosition;
 //TODO remove destroyed bases
 // Store all known enemy base positions
 std::vector<BWAPI::Position> enemyBasePositions;
-std::vector<BWAPI::Position> ourBasePositions;
 
 // Store all base positions for easy reference
 static std::vector<BWAPI::Position> allBasePositions;
 
 namespace BasesTools {  
-    void BasesTools::Initialize() {    
-        bwem.Initialize(BWAPI::BroodwarPtr);
-        bwem.EnableAutomaticPathAnalysis();
-        bwem.FindBasesForStartingLocations();
-        int baseCount = bwem.BaseCount();
-        Tools::print("Base count vvv");
-        Tools::print(std::to_string(baseCount));
-        enemyBasePositions.clear();
-        mainBasePosition = BWAPI::TilePositions::None;
-        CacheBWEMBases();
-        ourBasePositions.clear();
-    }
+
     // Adds a new enemy base position if not already present
     void SetEnemyBasePosition(const BWAPI::Position& pos) {
         if (pos == BWAPI::Positions::None) return;
         auto it = std::find(enemyBasePositions.begin(), enemyBasePositions.end(), pos);
         if (it == enemyBasePositions.end()) {
             enemyBasePositions.push_back(pos);
-        }
-    }
-
-    void SetOurBasePosition(const BWAPI::Position& pos) {
-        for (const auto& basePos : allBasePositions) {
-            BWAPI::TilePosition tilePos(basePos);
-            bool foundDepot = false;
-            for (auto& unit : BWAPI::Broodwar->getUnitsOnTile(tilePos)) {
-                if (unit->getPlayer() == BWAPI::Broodwar->self() &&
-                    unit->getType().isResourceDepot() &&
-                    unit->exists()) {
-                    foundDepot = true;
-                    break;
-                }
-            }
-            if (foundDepot) {
-                // Only add if not already present
-                if (std::find(ourBasePositions.begin(), ourBasePositions.end(), basePos) == ourBasePositions.end()) {
-                    ourBasePositions.push_back(basePos);
-                }
-            }
         }
     }
 
@@ -169,6 +136,19 @@ namespace BasesTools {
 
     const std::vector<BWAPI::Position>& BasesTools::GetAllBasePositions() {
         return allBasePositions;
+    }
+
+    void BasesTools::Initialize() {
+        //if (bwem.Initialized()) bwem.ResetInstance();            
+        bwem.Initialize(BWAPI::BroodwarPtr);
+        bwem.EnableAutomaticPathAnalysis();
+        bwem.FindBasesForStartingLocations();
+        int baseCount = bwem.BaseCount();
+        Tools::print("Base count vvv");
+        Tools::print(std::to_string(baseCount));
+        enemyBasePositions.clear();
+        mainBasePosition = BWAPI::TilePositions::None;
+        CacheBWEMBases(); // <-- Add this line to cache base positions on initialization
     }
 
     void BasesTools::OnUnitDestroyed(BWAPI::Unit unit) {

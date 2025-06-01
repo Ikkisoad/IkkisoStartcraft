@@ -46,7 +46,7 @@ void EightPool::Execute() {
     }
     if (BWAPI::Broodwar->self()->minerals() >= 190) {
         if (!Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, 1, BWAPI::Broodwar->self()->getStartLocation())) {
-            Tools::BuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, BWAPI::Broodwar->self()->getStartLocation());
+            builtSpawningPool = Tools::BuildBuilding(BWAPI::UnitTypes::Zerg_Spawning_Pool, BWAPI::Broodwar->self()->getStartLocation());
         }
     }
 
@@ -55,12 +55,17 @@ void EightPool::Execute() {
         if (BWAPI::Broodwar->self()->supplyTotal() == BWAPI::Broodwar->self()->supplyUsed()) Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Overlord);
     }
 
+    int hatchCount = Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Hatchery);
+    if (hatchCount > 1) {
+        if (hatchCount * 20 > Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Drone)) Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Drone);
+    }
+
     // Train zerglings when pool is done
     if (Tools::GetUnitOfType(BWAPI::UnitTypes::Zerg_Spawning_Pool)) {
         Tools::MorphLarva(BWAPI::UnitTypes::Zerg_Zergling);
 
         if (builtExtractor && BWAPI::Broodwar->self()->minerals() >= 350) {
-            Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BWAPI::Broodwar->self()->getStartLocation());
+            Tools::TryBuildBuilding(BWAPI::UnitTypes::Zerg_Hatchery, 0, BasesTools::GetNextExpansionPosition());
         }
     }
     Micro::BasicAttackAndScoutLoop(myUnits);
@@ -82,5 +87,8 @@ void EightPool::onUnitComplete(BWAPI::Unit unit) {
                 count++;
             }
         }
+    }
+    if (unit->getType() == BWAPI::UnitTypes::Zerg_Spawning_Pool) {
+        builtSpawningPool = true;
     }
 }
