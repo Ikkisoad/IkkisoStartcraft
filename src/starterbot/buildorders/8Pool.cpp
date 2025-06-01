@@ -13,6 +13,7 @@ void EightPool::onStart() {
     builtEightDrones = false;
     builtExtractor = false;
     builtSpawningPool = false;
+	Micro::SetMode(Micro::MicroMode::Aggressive);
 }
 
 void EightPool::Execute() {

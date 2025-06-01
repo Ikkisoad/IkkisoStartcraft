@@ -19,6 +19,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\BWEM\include\area.h" />
+    <ClInclude Include="..\BWEM\include\base.h" />
+    <ClInclude Include="..\BWEM\include\BaseFinder.h" />
+    <ClInclude Include="..\BWEM\include\bwapiExt.h" />
+    <ClInclude Include="..\BWEM\include\bwem.h" />
+    <ClInclude Include="..\BWEM\include\cp.h" />
+    <ClInclude Include="..\BWEM\include\defs.h" />
+    <ClInclude Include="..\BWEM\include\graph.h" />
+    <ClInclude Include="..\BWEM\include\gridMap.h" />
+    <ClInclude Include="..\BWEM\include\map.h" />
+    <ClInclude Include="..\BWEM\include\mapDrawer.h" />
+    <ClInclude Include="..\BWEM\include\mapImpl.h" />
+    <ClInclude Include="..\BWEM\include\mapPrinter.h" />
+    <ClInclude Include="..\BWEM\include\neutral.h" />
+    <ClInclude Include="..\BWEM\include\tiles.h" />
+    <ClInclude Include="..\BWEM\include\utils.h" />
     <ClInclude Include="..\src\starterbot\buildorders\4Pool.h" />
     <ClInclude Include="..\src\starterbot\buildorders\5Pool.h" />
     <ClInclude Include="..\src\starterbot\buildorders\6Pool.h" />

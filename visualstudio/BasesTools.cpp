@@ -5,6 +5,7 @@
 #include "../BWEM/bwem.h"  
 #include "../src/starterbot/Tools.h"
 #include <random>
+#include "../BWEM/include/base.h"
 
 auto& bwem = BWEM::Map::Instance();  
 
@@ -123,10 +124,11 @@ namespace BasesTools {
         return false;
     }
 
+    // Fix for the reported errors
     void BasesTools::CacheBWEMBases() {
         allBasePositions.clear();
-        for (auto area : bwem.Areas()) {
-            for (auto& base : area.Bases()) {
+        for (auto& area : bwem.Areas()) { // Ensure "area" is correctly defined
+            for (const BWEM::Base& base : area.Bases()) { // Use BWEM::Base explicitly to avoid identifier issues
                 allBasePositions.push_back(BWAPI::Position(base.Location()));
             }
         }

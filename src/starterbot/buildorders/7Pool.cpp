@@ -11,6 +11,7 @@ SevenPool& SevenPool::Instance() {
 
 void SevenPool::onStart() {
     builtSevenDrones = false;
+    Micro::SetMode(Micro::MicroMode::Aggressive);
 }
 
 void SevenPool::Execute() {

@@ -45,4 +45,5 @@ bool FourPool::isLethalTo(BWAPI::Unit myUnit, BWAPI::Unit enemy) {
 
 void FourPool::onStart() {
     zerglingRush = false;
+    Micro::SetMode(Micro::MicroMode::Aggressive);
 }

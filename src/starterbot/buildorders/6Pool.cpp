@@ -11,6 +11,7 @@ SixPool& SixPool::Instance() {
 
 void SixPool::onStart() {
     builtSixDrones = false;
+    Micro::SetMode(Micro::MicroMode::Aggressive);
 }
 
 void SixPool::Execute() {

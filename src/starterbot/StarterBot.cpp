@@ -18,7 +18,6 @@ BuildOrder* currentBuildOrder;
 
 int unusedSupplyAccepted = 1;
 int mineralsFrame = 0;
-BWAPI::Unit scout;
 
 // Called when the bot starts!
 void StarterBot::onStart()
@@ -33,22 +32,16 @@ void StarterBot::onStart()
     }
     auto strategy = Stats::readStrategy(oponentName, oponentRace, BWAPI::Broodwar->mapHash());
 
-
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> distX(0, sizeof(BuildOrderType));
     int x = distX(rng);
-
-    BWAPI::Broodwar->printf("Random number: %i and size of enum %i", x, sizeof(BuildOrderType));
-
     BasesTools::Initialize();
     mineralsFrame = 0;
     // Select the build order type you want to use
     BuildOrderType selectedBuildOrder = static_cast<BuildOrderType>(x);
-    currentBuildOrder = BuildOrderFactory::Create(BuildOrderType::Genetic);
+    currentBuildOrder = BuildOrderFactory::Create(selectedBuildOrder);
     BWAPI::Broodwar->printf("Strategy selected: %s", currentBuildOrder->GetName());
     std::cout << "Using strategy " << currentBuildOrder->GetName() << "\n";
-
-    scout = getAvailableUnit(BWAPI::UnitTypes::Zerg_Overlord);
 
     // Set our BWAPI options here    
 	BWAPI::Broodwar->setLocalSpeed(0); //32
@@ -59,9 +52,6 @@ void StarterBot::onStart()
 
     // Call MapTools OnStart
     m_mapTools.onStart();
-
-    //Send first scout
-    Tools::Scout(scout);
     BasesTools::FindExpansions();
 
     currentBuildOrder->onStart();

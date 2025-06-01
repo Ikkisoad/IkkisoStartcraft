@@ -14,6 +14,7 @@ FivePool::FivePool() : builtExtraDrone(false) {}
 
 void FivePool::onStart() {
     builtExtraDrone = false;
+    Micro::SetMode(Micro::MicroMode::Aggressive);
 }
 
 void FivePool::Execute() {
