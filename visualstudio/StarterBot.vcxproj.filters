@@ -70,6 +70,9 @@
     </ClCompile>
     <ClCompile Include="..\src\starterbot\stats\stats.cpp" />
     <ClCompile Include="..\src\starterbot\buildorders\BuildOrderTools.cpp" />
+    <ClCompile Include="..\src\starterbot\buildorders\Genetic.cpp">
+      <Filter>BOs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
@@ -97,6 +100,9 @@
     </ClInclude>
     <ClInclude Include="..\src\starterbot\stats\stats.h" />
     <ClInclude Include="..\src\starterbot\buildorders\BuildOrderTools.h" />
+    <ClInclude Include="..\src\starterbot\buildorders\Genetic.h">
+      <Filter>BOs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="BWEM">

@@ -5,6 +5,7 @@
 namespace BasesTools {
 	bool IsAreaEnemyBase(BWAPI::Position position, int range);
 	void Initialize();
+	bool IsAreaOurBase(BWAPI::Position position, int range);
 	void CacheBWEMBases();
 	void VerifyEnemyBases();
 	const std::vector<BWAPI::Position>& GetAllBasePositions();

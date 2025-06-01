@@ -4,14 +4,25 @@
 
 namespace Micro
 {
+    enum class MicroMode
+    {
+        Neutral,
+        Aggressive,
+        Defensive
+    };
+
+    void SetMode(MicroMode newMode);
+    MicroMode GetMode();
+
     void SmartAttackUnit(BWAPI::Unit attacker, BWAPI::Unit target);
     void SmartMove(BWAPI::Unit unit, BWAPI::Position position);
     void SmartKiteTarget(BWAPI::Unit rangedUnit, BWAPI::Unit target);
     void SmartFleeUntilHealed(BWAPI::Unit meleeUnit, BWAPI::Unit enemyUnit);
     void ScoutAndWander(BWAPI::Unit scout);
-    void SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit);
+    void SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit, bool alwaysAvoid);
     void sendIdleWorkersToMinerals();
     void GatherMinerals(BWAPI::Unit unit);
+    void GatherResources(BWAPI::Unit unit);
     void SmartGatherMinerals(BWAPI::Unit drone);
     void unitAttack(BWAPI::Unit unit);
     void attack();

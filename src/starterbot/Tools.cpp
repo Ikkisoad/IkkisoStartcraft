@@ -142,6 +142,24 @@ bool Tools::MorphLarva(BWAPI::UnitType unit) {
     return false;
 }
 
+bool Tools::ResearchUpgrade(BWAPI::UpgradeType upgrade) {
+    for (auto u : BWAPI::Broodwar->self()->getUnits()) {
+        // if the unit is a hatchery, lair or hive, and it has enough minerals and gas
+        if (u->canResearch(upgrade) && BWAPI::Broodwar->self()->minerals() >= upgrade.mineralPrice() && BWAPI::Broodwar->self()->gas() >= upgrade.gasPrice()) {
+            return u->upgrade(upgrade);
+        }
+	}
+}
+
+bool Tools::ResearchTech(BWAPI::TechType upgrade) {
+    for (auto u : BWAPI::Broodwar->self()->getUnits()) {
+        // if the unit is a hatchery, lair or hive, and it has enough minerals and gas
+        if (u->canResearch(upgrade) && BWAPI::Broodwar->self()->minerals() >= upgrade.mineralPrice() && BWAPI::Broodwar->self()->gas() >= upgrade.gasPrice()) {
+            return u->research(upgrade);
+        }
+    }
+}
+
 // Attempt to construct a building of a given type 
 bool Tools::BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation())
 {
@@ -185,7 +203,6 @@ bool Tools::BuildBuildingOptimal(BWAPI::UnitType type, BWAPI::TilePosition desir
     // Get the type of unit that is required to build the desired building
     BWAPI::UnitType builderType = type.whatBuilds().first;
     BWAPI::Unit builder = nullptr;
-
     // Find the closest available builder to the desired position
     int minDist = std::numeric_limits<int>::max();
     for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
@@ -198,6 +215,12 @@ bool Tools::BuildBuildingOptimal(BWAPI::UnitType type, BWAPI::TilePosition desir
         }
     }
     if (!builder) return false;
+
+    if (type == BWAPI::UnitTypes::Zerg_Hive || type == BWAPI::UnitTypes::Zerg_Lair || type == BWAPI::UnitTypes::Zerg_Sunken_Colony || type == BWAPI::UnitTypes::Zerg_Spore_Colony) {
+        // Special case for Hive and Lair, they can only be built at the main base
+		builder->morph(type);
+		return true;
+    }
 
     int maxBuildRange = 16; // Tight range for fast buildings like Spawning Pool
     bool buildingOnCreep = type.requiresCreep();
