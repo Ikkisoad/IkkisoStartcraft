@@ -97,6 +97,32 @@ namespace BasesTools {
         return false;
     }
 
+    // Checks a square area of tiles around the given position for enemy buildings.
+    // Range is in tiles (default 3), so a 3x3 area centered on the position is checked.
+    bool BasesTools::IsAreaOurBase(BWAPI::Position position, int range) {
+        auto area = bwem.GetArea(BWAPI::TilePosition(position));
+        if (!area) return false;
+
+        BWAPI::TilePosition centerTile(position);
+        int minX = std::max(0, centerTile.x - range);
+        int maxX = std::min(BWAPI::Broodwar->mapWidth() - 1, centerTile.x + range);
+        int minY = std::max(0, centerTile.y - range);
+        int maxY = std::min(BWAPI::Broodwar->mapHeight() - 1, centerTile.y + range);
+
+        for (int x = minX; x <= maxX; ++x) {
+            for (int y = minY; y <= maxY; ++y) {
+                BWAPI::TilePosition tile(x, y);
+                for (auto& unit : BWAPI::Broodwar->getUnitsOnTile(tile)) {
+                    if (unit->getPlayer() == BWAPI::Broodwar->self() &&
+                        unit->getType().isBuilding() && unit->exists()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     void BasesTools::CacheBWEMBases() {
         allBasePositions.clear();
         for (auto area : bwem.Areas()) {

@@ -4,8 +4,9 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include "../micro.h" // Add this include for MicroMode
 
-enum class ActionType { Unit, Building, Upgrade, Tech };
+enum class ActionType { Unit, Building, Upgrade, Tech, MicroMode };
 
 struct BuildAction {
     int supply;         // Supply at which to trigger
@@ -14,6 +15,7 @@ struct BuildAction {
     BWAPI::UnitType unitType;      // For units/buildings
     BWAPI::UpgradeType upgradeType; // For upgrades
     BWAPI::TechType techType;      // For tech research
+    Micro::MicroMode microMode = Micro::MicroMode::Neutral; // Only used if actionType == MicroMode
 };
 
 class Genetic : public BuildOrder {
@@ -24,6 +26,7 @@ public:
     void onUnitComplete(BWAPI::Unit unit) override;
     void onStart() override;
     void onEnd(bool isWinner) override;
+    void MutateBuildOrder(std::vector<BuildAction>& actions);
     void AnalyzeBuildOrderResults();
     std::string GetName() const override { return "Genetic"; }
     // Logging

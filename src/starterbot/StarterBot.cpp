@@ -160,6 +160,7 @@ void StarterBot::onEnd(bool isWinner)
             oponentRace = player->getRace().getName();
         }
     }
+    currentBuildOrder->onEnd(isWinner);
     std::cout << "We " << (isWinner ? "won!" : "lost!") << "\n";
     Stats::updateWinRateFile(oponentName, oponentRace, BWAPI::Broodwar->mapHash(), currentBuildOrder->GetName(), isWinner);
 }

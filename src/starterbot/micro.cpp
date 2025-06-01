@@ -5,7 +5,15 @@
 #include "../../BasesTools.h"
 #include "Tools.h"
 
+enum MicroMode { Neutral, Aggressive, Defensive };
 int safeRange = 64;
+
+namespace Micro {
+    static MicroMode mode = MicroMode::Neutral;
+
+    void SetMode(MicroMode newMode) { mode = newMode; }
+    MicroMode GetMode() { return mode; }
+}
 
 void Micro::SmartAttackUnit(BWAPI::Unit attacker, BWAPI::Unit target)
 {
@@ -220,7 +228,7 @@ void Micro::ScoutAndWander(BWAPI::Unit scout)
 // TODO Vicinity strength - test if there are enough ally units nearby to overwell the enemy
 // TODO Rabge safety - If a ranged unit kills us in two hits, don't enter its range
 // TODO Consider enemy lethal range as its range + 2 tiles
-void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
+void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit, bool alwaysAvoid)
 {
     if (!unit) return;
 
@@ -337,7 +345,7 @@ void Micro::SmartAvoidLethalAndAttackNonLethal(BWAPI::Unit unit)
         if (unit->getType().isFlyer()) weapon = enemy->getType().airWeapon();
         int damage = weapon.damageAmount();
         int unitHP = unit->getHitPoints() + unit->getShields();
-        bool isLethal = (damage > 0 && damage * 2 >= unitHP);
+        bool isLethal = (damage > 0 && damage * 2 >= unitHP) || alwaysAvoid;
 
         int dist = unit->getDistance(enemy);
 
@@ -568,7 +576,7 @@ void Micro::unitAttack(BWAPI::Unit unit) {
         if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { return; }
         if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
             //Units::AttackNearestNonLethalEnemyUnit(unit);
-            Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+            Micro::SmartAvoidLethalAndAttackNonLethal(unit, false);
         }
         else {
             unit->attack(enemyBase);
@@ -586,7 +594,7 @@ void Micro::attack() {
             Units unitsInstance;
             auto enemies = unitsInstance.GetNearbyEnemyUnits(unit, 640);
             if (!enemies.empty()) {
-                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                Micro::SmartAvoidLethalAndAttackNonLethal(unit, false);
                 continue;
             }
 
@@ -596,7 +604,7 @@ void Micro::attack() {
                 if (unit->getLastCommandFrame() >= BWAPI::Broodwar->getFrameCount()) { continue; }
                 if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
                     //Units::AttackNearestNonLethalEnemyUnit(unit);
-                    Micro::SmartAvoidLethalAndAttackNonLethal(unit);
+                    Micro::SmartAvoidLethalAndAttackNonLethal(unit, false);
                 } else {
                     unit->attack(enemyBase);
                 }
@@ -615,62 +623,64 @@ void Micro::BasicAttackAndScoutLoop(BWAPI::Unitset myUnits) {
             if (unit->isIdle()) Micro::GatherResources(unit);
             continue;
         }
-
-        /*if (Tools::CountUnitOfType(BWAPI::UnitTypes::Zerg_Zergling) < 4) {
-            Micro::ScoutAndWander(unit);
-            return;
-        }*/
         if (!unit->getType().isBuilding()) {
-            // Only micro if the unit is not busy with something else
             if (unit->isMorphing() || unit->isBurrowed() || unit->isLoaded()) continue;
 
-            // Use spatial queries for efficiency
             auto enemies = unit->getUnitsInRadius(640, BWAPI::Filter::IsEnemy && BWAPI::Filter::Exists);
-            if (!enemies.empty()) {
-                // Check for nearest offensive enemy unit
-                BWAPI::Unit nearestOffensive = nullptr;
-                int minDist = 645;
-                int enemyCount = 0;
-                for (auto enemy : enemies) {
-                    if (!enemy || !enemy->exists()) continue;
-                    // Offensive: can attack, not worker, not building
-                    if (enemy->getType().canAttack() && !enemy->getType().isWorker() && !enemy->getType().isBuilding()) {
-                        int dist = unit->getDistance(enemy);
-                        if (dist < minDist) {
-                            minDist = dist;
-                            nearestOffensive = enemy;
+
+            switch (static_cast<int>(Micro::GetMode())) {
+                case static_cast<int>(MicroMode::Aggressive):
+                    if (!enemies.empty()) {
+                        Micro::SmartAvoidLethalAndAttackNonLethal(unit, false);
+                    } else {
+                        Micro::unitAttack(unit);
+                    }
+                    break;
+
+                case static_cast<int>(MicroMode::Defensive):
+                    if (!enemies.empty()) {
+                        // If near our base, defend; otherwise, retreat
+                        if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
+                            Micro::SmartAvoidLethalAndAttackNonLethal(unit, false);
                         }
-                        enemyCount++;
+                        else  if (BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
+                            Micro::SmartAvoidLethalAndAttackNonLethal(unit, false);
+                        }else {
+                            Micro::Retreat(unit);
+                        }
+                    } else {
+                        // Stay near base or patrol
+                        Micro::Retreat(unit);
                     }
-                }
-                // Count nearby allies (excluding buildings and workers)
-                if (nearestOffensive) {
-                    int allyCount = 0;
-                    auto alliesNearby = unit->getUnitsInRadius(96, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
-                    auto alliesNearbyEnemy = nearestOffensive->getUnitsInRadius(96, BWAPI::Filter::IsAlly && !BWAPI::Filter::IsWorker && !BWAPI::Filter::IsBuilding);
-                    allyCount = static_cast<int>(alliesNearby.size()) + static_cast<int>(alliesNearbyEnemy.size());
-                    // If we have at least 2x as many allies as offensive enemies, attack the nearest offensive enemy
-                    if (allyCount >= enemyCount * 2 && enemyCount > 0 && false) {
-                        Micro::SmartAttackUnit(unit, nearestOffensive);
-                        return;
+                    break;
+
+                case static_cast<int>(MicroMode::Neutral):
+                    Micro::SmartAvoidLethalAndAttackNonLethal(unit, true);
+                default:
+                    if (!enemies.empty()) {
+                        // Avoid combat: flee from nearest offensive enemy
+                        BWAPI::Unit nearestOffensive = nullptr;
+                        int minDist = 645;
+                        for (auto enemy : enemies) {
+                            if (!enemy || !enemy->exists()) continue;
+                            if (enemy->getType().canAttack() && !enemy->getType().isWorker() && !enemy->getType().isBuilding()) {
+                                int dist = unit->getDistance(enemy);
+                                if (dist < minDist) {
+                                    minDist = dist;
+                                    nearestOffensive = enemy;
+                                }
+                            }
+                        }
+                        if (nearestOffensive) {
+                            Micro::Flee(unit, nearestOffensive);
+                        } else {
+                            Micro::Flee(unit, *enemies.begin());
+                        }
+                    } else {
+                        // Out on the map, avoid combat, scout/wander
+                        Micro::ScoutAndWander(unit);
                     }
-                    int range = nearestOffensive->getType().groundWeapon().maxRange();
-                    int dist = unit->getDistance(nearestOffensive);
-                    if (enemyCount > (allyCount * 2) + 1 && range + safeRange >= dist) {
-                        Micro::Flee(unit, nearestOffensive);
-                        return;
-                    }
-                }
-                /*else if (unit->getHitPoints() < unit->getInitialHitPoints() / 4) {
-                    Micro::Retreat(unit);
-                    return;
-                }*/
-                Micro::SmartAvoidLethalAndAttackNonLethal(unit);
-            }
-            else {
-                if (!BasesTools::IsAreaEnemyBase(unit->getPosition(), 3)) {
-                    Micro::unitAttack(unit);
-                }
+                    break;
             }
         }
     }
