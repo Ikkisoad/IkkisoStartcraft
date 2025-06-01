@@ -31,8 +31,7 @@ namespace Tools
     void SmartRightClick(BWAPI::Unit unit, BWAPI::Unit target);
 
     int GetTotalSupply(bool inProgress = false);
-
-    bool IsQueued(BWAPI::UnitType unit);
+    BWAPI::TilePosition IsQueued(BWAPI::UnitType unit);
 
     bool IsReady(BWAPI::UnitType unit);
 

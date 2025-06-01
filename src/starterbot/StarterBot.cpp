@@ -22,6 +22,8 @@ int mineralsFrame = 0;
 // Called when the bot starts!
 void StarterBot::onStart()
 {
+    Micro::SetMode(Micro::MicroMode::Aggressive);
+    BasesTools::SetOurBasePosition();
     std::string oponentName = "";
     std::string oponentRace = "";
     for (auto player : BWAPI::Broodwar->getPlayers()) {
@@ -39,7 +41,7 @@ void StarterBot::onStart()
     mineralsFrame = 0;
     // Select the build order type you want to use
     BuildOrderType selectedBuildOrder = static_cast<BuildOrderType>(x);
-    currentBuildOrder = BuildOrderFactory::Create(BuildOrderType::EightPool);
+    currentBuildOrder = BuildOrderFactory::Create(BuildOrderType::Overpool);
     BWAPI::Broodwar->printf("Strategy selected: %s", currentBuildOrder->GetName());
     std::cout << "Using strategy " << currentBuildOrder->GetName() << "\n";
 
@@ -71,22 +73,6 @@ void StarterBot::onFrame()
     buildAdditionalSupply();
 
     currentBuildOrder->Execute();
-}
-
-bool StarterBot::buildBuilding(BWAPI::UnitType building, int limitAmount = 0, BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation()) {
-    if (Tools::IsQueued(building) || Tools::IsReady(building) && limitAmount != 0) {
-        return true;
-    }
-
-    if (BWAPI::Broodwar->self()->minerals() <= building.mineralPrice()) {
-        return false;
-    }
-
-    if (limitAmount != 0 && Tools::CountUnitsOfType(building, BWAPI::Broodwar->self()->getUnits(), false) >= limitAmount) {
-        return false;
-    }
-
-    return Tools::BuildBuilding(building, desiredPos);
 }
 
 BWAPI::Unit StarterBot::getAvailableUnit(BWAPI::UnitType unitType) {

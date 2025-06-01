@@ -32,9 +32,10 @@ int Tools::CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units, c
     for (auto& unit : units)
     {
         //Count units that are being produced
-        if (unit->getType() == type || unit->getBuildType() == type && inProgress)
+        if (unit->getType() == type || inProgress && (unit->getBuildType() == type || unit->getLastCommand().getType() == BWAPI::UnitCommandTypes::Build && unit->getLastCommand().getUnitType() == type))
         {
             sum++;
+            if (type == BWAPI::UnitTypes::Zerg_Zergling || type == BWAPI::UnitTypes::Zerg_Scourge) sum++;
         }
     }
 
@@ -107,7 +108,7 @@ BWAPI::Unit Tools::GetDepot()
 }
 
 bool Tools::TryBuildBuilding(BWAPI::UnitType building, int limitAmount = 0, BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation()) {
-    if (Tools::IsQueued(building) || Tools::IsReady(building) && limitAmount != 0) {
+    if (Tools::IsQueued(building) == desiredPos || Tools::IsReady(building) && limitAmount != 0) {
         return true;
     }
 
@@ -302,7 +303,12 @@ void Tools::DrawUnitBoundingBoxes()
         BWAPI::Position bottomRight(unit->getRight(), unit->getBottom());
 
         // Fix the problematic line by converting Position to a string using BWAPI::Text::Enum::Default formatting  
-        if (unit->getType().isBuilding()) BWAPI::Broodwar->drawTextMap(unit->getPosition(), "%s", PositionToString(unit->getPosition()).c_str());
+        if (unit->getType().isBuilding()) {
+            BWAPI::Broodwar->drawTextMap(unit->getPosition(), "%s", PositionToString(unit->getPosition()).c_str());
+        }
+        else {
+            BWAPI::Broodwar->drawTextMap(unit->getPosition(), "%i", unit->getID());
+        }
         BWAPI::Broodwar->drawBoxMap(topLeft, bottomRight, BWAPI::Colors::White);
     }
 }
@@ -369,7 +375,7 @@ int Tools::GetTotalSupply(bool inProgress)
     return totalSupply;
 }
 
-bool Tools::IsQueued(BWAPI::UnitType unit) {
+BWAPI::TilePosition Tools::IsQueued(BWAPI::UnitType unit) {
     // one last tricky case: if a unit is currently on its way to build a supply provider, add it
     for (auto& readyUnit : BWAPI::Broodwar->self()->getUnits()) {
         // get the last command given to the unit
@@ -378,9 +384,9 @@ bool Tools::IsQueued(BWAPI::UnitType unit) {
         // if it's not a build command we can ignore it
         if (command.getType() != BWAPI::UnitCommandTypes::Build || command.getUnitType() != unit) { continue; }
 
-        return true;
+        return command.getTargetTilePosition();
     }
-    return false;
+    return BWAPI::TilePositions::None;
 }
 
 bool Tools::IsReady(BWAPI::UnitType unit) {

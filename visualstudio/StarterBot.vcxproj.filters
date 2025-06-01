@@ -73,6 +73,9 @@
     <ClCompile Include="..\src\starterbot\buildorders\Genetic.cpp">
       <Filter>BOs</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\starterbot\buildorders\Overpool.cpp">
+      <Filter>Openners</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\starterbot\Grid.hpp" />
@@ -151,6 +154,9 @@
     <ClInclude Include="..\BWEM\include\utils.h">
       <Filter>BWEM</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\starterbot\buildorders\Overpool.h">
+      <Filter>Openners</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="BWEM">
@@ -158,6 +164,9 @@
     </Filter>
     <Filter Include="BOs">
       <UniqueIdentifier>{2c41304b-d439-467a-b06f-f9c9b7381aff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Openners">
+      <UniqueIdentifier>{aba8478d-d7c9-455c-bf6d-e66042cd1c58}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
